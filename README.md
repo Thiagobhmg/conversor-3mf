@@ -58,6 +58,17 @@ claude mcp add conversor3mf --scope user -- conversor3mf-mcp
 If you use [uv](https://docs.astral.sh/uv/), you can skip the `pip install` step:
 `claude mcp add conversor3mf --scope user -- uvx --from conversor3mf conversor3mf-mcp`
 
+**Claude Desktop (chat app):** open Settings → Developer → Edit Config and add the server to
+`claude_desktop_config.json`, then restart the app:
+
+```json
+{
+  "mcpServers": {
+    "conversor3mf": { "command": "python", "args": ["-m", "conversor3mf.servidor_mcp"] }
+  }
+}
+```
+
 Then just ask, in any language:
 
 > "Convert C:\Downloads\coaster.3mf for my Kobra X"
@@ -89,6 +100,74 @@ For a material that is not in any slot yet (ABS, TPU…), save a new project wit
 `ace setup` again.
 
 Your data lives in `%APPDATA%\conversor3mf`. Change it with `CONVERSOR3MF_DADOS`.
+
+## Step by step: talking to Claude
+
+Write in your own language, the way you'd ask a friend. These are the prompts that work
+best, in the order you'll usually need them.
+
+**1. First time: show Claude your ACE**
+
+Sync the ACE in Anycubic Slicer Next, save any project, then:
+
+> "Set up my ACE using the project C:\Users\me\Documents\any_project.3mf"
+
+Claude reads the slots and lists them back. Check that colors and materials match the
+spools you actually have loaded.
+
+**2. Whenever you swap a spool**
+
+> "I swapped slot 4 for a yellow PLA"
+>
+> "What's in my ACE right now?"
+
+For a material that isn't in any slot yet (ABS, TPU…), repeat step 1 with a project that
+uses it.
+
+**3. Converting a file**
+
+Always give the **full path** of the file, or the folder plus the file name:
+
+> "Convert C:\Downloads\coaster.3mf for my Kobra X"
+
+Claude first shows **which slot each color goes to** and warns about problems. Then:
+
+- If everything looks right: "go ahead".
+- If a color has no similar spool, you can swap the spool and tell Claude ("I loaded a
+  green PLA in slot 4"), or force a slot: "put the orange (filament 3) in slot 3".
+- If the model has more colors than slots, tell it which ones to merge: "use the black slot
+  for both the black and the dark gray".
+
+**4. Several files at once**
+
+> "List the 3MF files in C:\Downloads and convert the ones made for Bambu printers"
+
+**5. Recoloring parts of a model ("islands")**
+
+Use the converted file (`..._KobraX.3mf`) and describe **what** and **which color**:
+
+> "In C:\Downloads\coaster_KobraX.3mf, make the holly leaves green and the stars red"
+
+Claude draws a numbered map of every same-color region, picks the numbers and shows a
+preview of the result. Tips:
+
+- Describe the part by **shape, position or current color**: "the small white stars", "the
+  leaves around the border", "the red dots on the hat".
+- For 3D figures, ask for **another view**: "look from the front" (or back, left, right,
+  bottom).
+- If numbers are crowded, ask it to **zoom**: "zoom into the top-left corner".
+- Correct it with the numbers from the map: "not island 42, I meant 32".
+- Nothing is overwritten: each repaint creates a new `..._repintado.3mf` file.
+
+**6. Checking before you print**
+
+> "Check C:\Downloads\coaster_KobraX.3mf in the slicer"
+
+For projects with more than one plate, also open the file in Anycubic Slicer Next and take
+a look (see [Limitations](#limitations)).
+
+**What Claude can't do:** start a print, change settings inside the slicer, or download
+models from MakerWorld. Download the 3MF yourself, then ask.
 
 ## Command line
 

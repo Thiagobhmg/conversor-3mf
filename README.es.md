@@ -60,6 +60,17 @@ claude mcp add conversor3mf --scope user -- conversor3mf-mcp
 Si usas [uv](https://docs.astral.sh/uv/), puedes saltarte el `pip install`:
 `claude mcp add conversor3mf --scope user -- uvx --from conversor3mf conversor3mf-mcp`
 
+**Claude Desktop (app de chat):** abre Configuración → Desarrollador → Editar configuración,
+añade el servidor a `claude_desktop_config.json` y reinicia la app:
+
+```json
+{
+  "mcpServers": {
+    "conversor3mf": { "command": "python", "args": ["-m", "conversor3mf.servidor_mcp"] }
+  }
+}
+```
+
 Después, solo pídelo:
 
 > "Convierte C:\Descargas\posavasos.3mf para mi Kobra X"
@@ -91,6 +102,76 @@ Para un material que todavía no está en ninguna ranura (ABS, TPU…), guarda u
 con él y vuelve a ejecutar `ace configurar`.
 
 Tus datos se guardan en `%APPDATA%\conversor3mf`. Puedes cambiarlo con `CONVERSOR3MF_DADOS`.
+
+## Paso a paso: hablando con Claude
+
+Escribe en tu idioma, como se lo pedirías a un amigo. Estas son las peticiones que mejor
+funcionan, en el orden en que sueles necesitarlas.
+
+**1. La primera vez: muéstrale tu ACE a Claude**
+
+Sincroniza el ACE en Anycubic Slicer Next, guarda cualquier proyecto y pide:
+
+> "Configura mi ACE usando el proyecto C:\Users\yo\Documents\cualquier_proyecto.3mf"
+
+Claude lee las ranuras y te las muestra. Comprueba que los colores y materiales coinciden con
+los carretes que tienes cargados.
+
+**2. Cada vez que cambies un carrete**
+
+> "Cambié la ranura 4 por un PLA amarillo"
+>
+> "¿Qué hay en mi ACE ahora?"
+
+Para un material que todavía no está en ninguna ranura (ABS, TPU…), repite el paso 1 con un
+proyecto que lo use.
+
+**3. Convertir un archivo**
+
+Indica siempre la **ruta completa** del archivo, o la carpeta y el nombre:
+
+> "Convierte C:\Descargas\posavasos.3mf para mi Kobra X"
+
+Primero Claude muestra **a qué ranura irá cada color** y avisa de los problemas. Después:
+
+- Si todo está bien: "adelante".
+- Si un color no tiene un carrete parecido, cambia el carrete y avísale ("puse un PLA verde
+  en la ranura 4"), o fuerza una ranura: "pon el naranja (filamento 3) en la ranura 3".
+- Si el modelo tiene más colores que ranuras, dile cuáles juntar: "usa la ranura del negro
+  para el negro y el gris oscuro".
+
+**4. Varios archivos a la vez**
+
+> "Lista los 3MF de C:\Descargas y convierte los que sean para impresoras Bambu"
+
+**5. Repintar partes del modelo ("islas")**
+
+Usa el archivo convertido (`..._KobraX.3mf`) y di **qué** y **de qué color**:
+
+> "En C:\Descargas\posavasos_KobraX.3mf, pon las hojas de acebo en verde y las estrellas en
+> rojo"
+
+Claude dibuja un mapa numerado de cada región del mismo color, elige los números y muestra
+una vista previa del resultado. Consejos:
+
+- Describe la parte por su **forma, posición o color actual**: "las estrellitas blancas",
+  "las hojas alrededor del borde", "los puntos rojos del gorro".
+- En figuras 3D, pide **otra vista**: "mira de frente" (o desde atrás, la izquierda, la
+  derecha, abajo).
+- Si los números están amontonados, pide **zoom**: "haz zoom en la esquina superior
+  izquierda".
+- Corrígelo con los números del mapa: "la isla 42 no, era la 32".
+- Nada se sobrescribe: cada repintado crea un archivo nuevo `..._repintado.3mf`.
+
+**6. Comprobar antes de imprimir**
+
+> "Comprueba C:\Descargas\posavasos_KobraX.3mf en el slicer"
+
+En proyectos con más de una placa, abre también el archivo en Anycubic Slicer Next y échale
+un vistazo (ver [Limitaciones](#limitaciones)).
+
+**Lo que Claude no hace:** iniciar la impresión, cambiar ajustes dentro del slicer ni
+descargar modelos de MakerWorld. Descarga el 3MF tú mismo y luego pídelo.
 
 ## Línea de comandos
 

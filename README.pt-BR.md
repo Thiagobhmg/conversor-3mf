@@ -58,6 +58,17 @@ claude mcp add conversor3mf --scope user -- conversor3mf-mcp
 Se você usa o [uv](https://docs.astral.sh/uv/), dá para pular o `pip install`:
 `claude mcp add conversor3mf --scope user -- uvx --from conversor3mf conversor3mf-mcp`
 
+**Claude Desktop (app de conversa):** abra Configurações → Desenvolvedor → Editar configuração,
+adicione o servidor ao `claude_desktop_config.json` e reinicie o app:
+
+```json
+{
+  "mcpServers": {
+    "conversor3mf": { "command": "python", "args": ["-m", "conversor3mf.servidor_mcp"] }
+  }
+}
+```
+
 Depois é só pedir:
 
 > "Converte o C:\Downloads\porta-copos.3mf para a minha Kobra X"
@@ -89,6 +100,75 @@ Para um material que ainda não está em nenhum slot (ABS, TPU…), salve um pro
 ele e rode `ace definir` de novo.
 
 Os dados ficam em `%APPDATA%\conversor3mf`. Dá para mudar o local com `CONVERSOR3MF_DADOS`.
+
+## Passo a passo: conversando com o Claude
+
+Escreva na sua língua, do jeito que pediria a um amigo. Estes são os pedidos que funcionam
+melhor, na ordem em que você costuma precisar deles.
+
+**1. Primeira vez: mostre o seu ACE ao Claude**
+
+Sincronize o ACE no Anycubic Slicer Next, salve qualquer projeto e peça:
+
+> "Configura meu ACE usando o projeto C:\Users\eu\Documents\qualquer_projeto.3mf"
+
+O Claude lê os slots e mostra a lista. Confira se as cores e os materiais batem com os
+carretéis que estão de fato na impressora.
+
+**2. Sempre que trocar um carretel**
+
+> "Troquei o slot 4 por um PLA amarelo"
+>
+> "O que tem no meu ACE agora?"
+
+Para um material que ainda não está em nenhum slot (ABS, TPU…), repita o passo 1 com um
+projeto que use esse material.
+
+**3. Convertendo um arquivo**
+
+Informe sempre o **caminho completo** do arquivo, ou a pasta e o nome dele:
+
+> "Converte o C:\Downloads\porta-copos.3mf para a minha Kobra X"
+
+Primeiro o Claude mostra **em qual slot cada cor vai sair** e avisa dos problemas. Depois:
+
+- Se estiver tudo certo: "pode converter".
+- Se alguma cor não tiver carretel parecido, troque o carretel e avise o Claude ("coloquei
+  um PLA verde no slot 4") ou force um slot: "põe o laranja (filamento 3) no slot 3".
+- Se o modelo tiver mais cores que slots, diga quais juntar: "usa o slot do preto para o
+  preto e para o cinza-escuro".
+
+**4. Vários arquivos de uma vez**
+
+> "Lista os 3MF da pasta C:\Downloads e converte os que forem para impressoras Bambu"
+
+**5. Repintando partes do modelo ("ilhas")**
+
+Use o arquivo já convertido (`..._KobraX.3mf`) e diga **o quê** e **qual cor**:
+
+> "No C:\Downloads\porta-copos_KobraX.3mf, deixa as folhas de azevinho verdes e as estrelas
+> vermelhas"
+
+O Claude desenha um mapa numerado de cada região de mesma cor, escolhe os números e mostra
+uma prévia do resultado. Dicas:
+
+- Descreva a parte pela **forma, posição ou cor atual**: "as estrelinhas brancas", "as
+  folhas em volta da borda", "as bolinhas vermelhas do gorro".
+- Em figuras 3D, peça **outra vista**: "olha de frente" (ou de trás, da esquerda, da
+  direita, de baixo).
+- Se os números estiverem amontoados, peça **zoom**: "dá um zoom no canto superior esquerdo".
+- Corrija usando os números do mapa: "a ilha 42 não, era a 32".
+- Nada é sobrescrito: cada repintura cria um arquivo novo `..._repintado.3mf`.
+
+**6. Conferindo antes de imprimir**
+
+> "Confere o C:\Downloads\porta-copos_KobraX.3mf no slicer"
+
+Em projetos com mais de uma placa, abra também o arquivo no Anycubic Slicer Next e dê uma
+olhada (veja [Limitações](#limitações)).
+
+**O que o Claude não faz:** iniciar a impressão, mudar configurações dentro do slicer ou
+baixar modelos do MakerWorld. Baixe o 3MF você mesmo e depois peça.
 
 ## Linha de comando
 
