@@ -3,7 +3,7 @@
 [![testes](https://github.com/JohnnyTrindade/conversor-3mf/actions/workflows/testes.yml/badge.svg)](https://github.com/JohnnyTrindade/conversor-3mf/actions/workflows/testes.yml)
 
 **Imprima modelos multicoloridos do MakerWorld na Anycubic Kobra X sem recolorir nada.**
-[English](README.md)
+[English](README.md) · [Español](README.es.md)
 
 A maioria dos 3MF multicoloridos do MakerWorld é feita para impressoras Bambu Lab. No
 Anycubic Slicer Next, as cores entram na ordem dos filamentos do arquivo, e não na ordem
@@ -100,6 +100,26 @@ conversor3mf repintar  modelo_KobraX.3mf 32=4,3=3       # repinta as ilhas 32 e 
 conversor3mf verificar modelo_KobraX.3mf        # reabre no slicer e compara
 ```
 
+Todos os comandos e opções também funcionam em **inglês e espanhol**: use o que for mais
+natural para você. A ajuda e as mensagens de erro saem na língua em que você digitou o
+comando, ou na língua do sistema:
+
+| Português | English | Español |
+|---|---|---|
+| `inspecionar` | `inspect` | `inspeccionar` |
+| `planejar` | `plan` | `planificar` |
+| `converter` | `convert` | `convertir` |
+| `verificar` | `verify` | `verificar` |
+| `ilhas` | `islands` | `islas` |
+| `repintar` | `repaint` | `repintar` |
+| `ace mostrar` / `definir` / `slot` | `ace show` / `setup` / `slot` | `ace mostrar` / `configurar` / `ranura` |
+| `--mapa` `--saida` `--sem-verificar` | `--map` `--output` `--no-verify` | `--mapa` `--salida` `--sin-verificar` |
+| `--vista cima/baixo/frente/tras/esquerda/direita` | `--view top/bottom/front/back/left/right` | `--vista arriba/abajo/frente/atras/izquierda/derecha` |
+| `--cor` `--tipo` `--nome` | `--color` `--type` `--name` | `--color` `--tipo` `--nombre` |
+
+Para forçar uma língua, use `--idioma pt` (ou `en`, `es`) ou a variável
+`CONVERSOR3MF_IDIOMA`. Rode `conversor3mf --help` para ver tudo.
+
 ## Como funciona
 
 - **Formato das cores.** O 3MF da Bambu e do Orca guarda números de filamento, não cores.
@@ -117,8 +137,11 @@ conversor3mf verificar modelo_KobraX.3mf        # reabre no slicer e compara
 - **Conferência de projetos de várias placas.** O Anycubic Slicer Next 2.0.0.3 trava pela
   linha de comando com qualquer projeto de mais de uma placa. Esses projetos só são
   conferidos internamente; abra no slicer antes de fatiar.
-- **Espaçamento entre placas.** Foi medido só na Kobra X (314,4 × 328,8 mm). Nas outras
-  impressoras, o conversor usa 1,2 × o tamanho da mesa.
+- **Distância entre as placas no slicer.** Em projetos de várias placas, o slicer desenha
+  as placas lado a lado, com um vão entre elas. A mesa em si tem 260 × 260 mm; a distância
+  de uma placa até a seguinte (314,4 mm para o lado e 328,8 mm para baixo) foi medida em
+  projetos salvos pelo Anycubic Slicer Next 2.0.0.3 para a Kobra X. Nas outras impressoras,
+  o conversor usa 1,2 × o tamanho da mesa, que é o que o Bambu Studio usa.
 - **Mais cores que slots.** Cores parecidas são juntadas. Em projetos de várias placas, dá
   para imprimir placa por placa e usar `--mapa`.
 - **3MF só com malha.** Arquivos sem projeto do slicer dentro não têm cores para converter.

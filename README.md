@@ -3,7 +3,7 @@
 [![testes](https://github.com/JohnnyTrindade/conversor-3mf/actions/workflows/testes.yml/badge.svg)](https://github.com/JohnnyTrindade/conversor-3mf/actions/workflows/testes.yml)
 
 **Print MakerWorld multicolor models on an Anycubic Kobra X without recoloring anything.**
-[Português](README.pt-BR.md)
+[Português](README.pt-BR.md) · [Español](README.es.md)
 
 Most multicolor 3MF files on MakerWorld are made for Bambu Lab printers. When you open
 one in Anycubic Slicer Next, the colors come in the file's filament order, not the order
@@ -75,32 +75,49 @@ numbered map of the model.
 2. Run this command, or ask Claude to "set up my ACE from that project":
 
    ```bash
-   conversor3mf ace definir "C:\path\to\saved_project.3mf"
+   conversor3mf ace setup "C:\path\to\saved_project.3mf"
    ```
 
 This saves the printer profile and your slot colors and materials. When you only change a
 spool's color, update it like this:
 
 ```bash
-conversor3mf ace slot 4 --cor "#FFD700" --tipo PLA
+conversor3mf ace slot 4 --color "#FFD700" --type PLA
 ```
 
 For a material that is not in any slot yet (ABS, TPU…), save a new project with it and run
-`ace definir` again.
+`ace setup` again.
 
 Your data lives in `%APPDATA%\conversor3mf`. Change it with `CONVERSOR3MF_DADOS`.
 
 ## Command line
 
 ```bash
-conversor3mf planejar  model.3mf               # show which slot each color goes to
-conversor3mf converter model.3mf --mapa 1=3    # convert; force filament 1 into slot 3
-conversor3mf ilhas     model_KobraX.3mf --vista cima    # numbered map of color regions
-conversor3mf repintar  model_KobraX.3mf 32=4,3=3        # recolor islands 32 and 3
-conversor3mf verificar model_KobraX.3mf        # reopen in Anycubic Slicer Next and compare
+conversor3mf plan    model.3mf                    # show which slot each color goes to
+conversor3mf convert model.3mf --map 1=3          # convert; force filament 1 into slot 3
+conversor3mf islands model_KobraX.3mf --view top  # numbered map of color regions
+conversor3mf repaint model_KobraX.3mf 32=4,3=3    # recolor islands 32 and 3
+conversor3mf verify  model_KobraX.3mf             # reopen in Anycubic Slicer Next and compare
 ```
 
-Command and option names are in Portuguese. Run `conversor3mf --help` for the full list.
+Every command and option also works in **Portuguese and Spanish**, so use whichever feels
+natural. Help and error messages follow the language you type in, or your system language:
+
+| English | Português | Español |
+|---|---|---|
+| `inspect` | `inspecionar` | `inspeccionar` |
+| `plan` | `planejar` | `planificar` |
+| `convert` | `converter` | `convertir` |
+| `verify` | `verificar` | `verificar` |
+| `islands` | `ilhas` | `islas` |
+| `repaint` | `repintar` | `repintar` |
+| `ace show` / `setup` / `slot` | `ace mostrar` / `definir` / `slot` | `ace mostrar` / `configurar` / `ranura` |
+| `--map` `--output` `--no-verify` | `--mapa` `--saida` `--sem-verificar` | `--mapa` `--salida` `--sin-verificar` |
+| `--view top/bottom/front/back/left/right` | `--vista cima/baixo/frente/tras/esquerda/direita` | `--vista arriba/abajo/frente/atras/izquierda/derecha` |
+| `--color` `--type` `--name` | `--cor` `--tipo` `--nome` | `--color` `--tipo` `--nombre` |
+
+Force a language with `--language en` (or `pt`, `es`) or the `CONVERSOR3MF_IDIOMA`
+variable. Run `conversor3mf --help` for the full list.
 
 ## How it works
 
@@ -119,10 +136,13 @@ Command and option names are in Portuguese. Run `conversor3mf --help` for the fu
 - **Verification of multi-plate projects.** Anycubic Slicer Next 2.0.0.3 crashes from the
   command line on any project with more than one plate. Those projects are only checked
   internally, so open them in the slicer before slicing.
-- **Plate grid spacing.** It is measured only for the Kobra X (314.4 × 328.8 mm). Other
-  printers fall back to 1.2 × the bed size.
+- **Distance between plates in the slicer.** Multi-plate projects are laid out side by side
+  in the slicer, with a gap between plates. The bed itself is 260 × 260 mm; the distance
+  from one plate to the next (314.4 mm sideways, 328.8 mm down) was measured from projects
+  saved by Anycubic Slicer Next 2.0.0.3 for the Kobra X. Other printers fall back to
+  1.2 × the bed size, which is what Bambu Studio uses.
 - **More colors than slots.** Similar colors get merged. For multi-plate projects you can
-  print plate by plate and use `--mapa`.
+  print plate by plate and use `--map`.
 - **Mesh-only 3MF files.** Files without a slicer project inside have no colors to
   convert.
 

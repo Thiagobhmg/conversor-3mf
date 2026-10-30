@@ -107,7 +107,8 @@ def mapa_de_ilhas(
 ) -> list[Image | str]:
     """Desenha o objeto com as cores reais e o número de cada ilha (região contínua de mesma cor).
 
-    vista: cima, baixo, frente, tras, esquerda ou direita.
+    vista: cima, baixo, frente, tras, esquerda ou direita (também em inglês: top, bottom,
+    front, back, left, right; ou espanhol: arriba, abajo, frente, atras, izquierda, derecha).
     objeto: id do objeto (padrão: o maior; a resposta lista os outros).
     regiao: zoom [x0, y0, x1, y1] em mm nas coordenadas da vista (as mesmas de centro_mm na
     vista de cima: x e y; nas vistas laterais o eixo vertical é z).

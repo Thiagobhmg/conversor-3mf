@@ -22,6 +22,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 from . import cores, pintura
+from .idiomas import vista_interna
 
 __all__ = ["Ilha", "carregar_objetos", "mapa_de_ilhas", "repintar_ilhas", "VISTAS"]
 
@@ -341,8 +342,10 @@ def _escolher(objetos: list[Objeto], objeto: str | None) -> Objeto:
 def mapa_de_ilhas(caminho: str | Path, objeto: str | None = None, vista: str = "cima",
                   regiao: list[float] | None = None, largura: int = 1400, rotulos: bool = True) -> tuple[bytes, dict]:
     """Desenha o objeto com o número de cada ilha visível. Devolve (png, informações)."""
-    if vista not in VISTAS:
-        raise ValueError(f"vista deve ser uma de {list(VISTAS)}")
+    interna = vista_interna(vista)  # aceita "top", "arriba" etc.
+    if interna is None:
+        raise ValueError(f"vista deve ser uma de {list(VISTAS)} (ou em inglês/espanhol)")
+    vista = interna
     objetos, cores_slots = carregar_objetos(caminho)
     alvo = _escolher(objetos, objeto)
     imagem, area = _desenhar(alvo, cores_slots, vista, regiao, largura, rotulos)
