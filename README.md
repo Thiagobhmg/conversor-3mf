@@ -236,11 +236,6 @@ variable. Run `conversor3mf --help` for the full list.
 - **Islands.** Connected triangles of the same color, after welding duplicate vertices.
   When a triangle has several colors, recoloring only changes the leaves of that island's
   color, including on the island's border.
-- **Color changes by height.** Some models are not painted at all: the designer switches
-  filament at fixed heights (for example, black from 3.8 mm and white again from 7.6 mm). These
-  changes are converted too, but the Prepare screen of the slicer shows the model with fewer
-  colors, sometimes only one. The colors only appear in the Preview after slicing, so there is
-  no need to recolor the parts by hand. The plan warns you when a model works like this.
 
 ## Limitations
 

@@ -241,12 +241,6 @@ Ejecuta `conversor3mf --help` para ver todo.
 - **Islas.** Son triángulos conectados del mismo color, después de unir vértices repetidos.
   En triángulos con varios colores, el repintado solo cambia las partes del color de la
   isla, también en el borde.
-- **Cambio de color por altura.** Algunos modelos no están pintados: el diseñador cambia el
-  filamento a alturas fijas (por ejemplo, negro desde 3,8 mm y blanco otra vez desde 7,6 mm).
-  Esos cambios también se convierten, pero la pantalla Preparar del slicer muestra el modelo con
-  menos colores, a veces uno solo. Los colores solo aparecen en la Vista previa después de
-  laminar, así que no hace falta recolorear las piezas a mano. El plan avisa cuando el modelo
-  funciona así.
 
 ## Limitaciones
 
