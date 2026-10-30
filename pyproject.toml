@@ -1,0 +1,35 @@
+[project]
+name = "conversor3mf"
+version = "0.1.0"
+description = "Convert Bambu Lab / MakerWorld multicolor 3MF projects to the Anycubic Kobra X, in the slot order of your ACE, with an MCP server for Claude"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Johnny Welton" }]
+requires-python = ">=3.10"
+dependencies = ["mcp>=2.3,<3", "numpy>=2", "pillow>=11"]
+keywords = ["3mf", "3d-printing", "anycubic", "kobra-x", "ace", "bambu-studio", "makerworld", "mcp", "multicolor"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: Portuguese (Brazilian)",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics :: 3D Modeling",
+]
+
+[project.urls]
+Homepage = "https://github.com/JohnnyTrindade/conversor-3mf"
+Issues = "https://github.com/JohnnyTrindade/conversor-3mf/issues"
+
+[project.scripts]
+conversor3mf = "conversor3mf.__main__:main"
+conversor3mf-mcp = "conversor3mf.servidor_mcp:main"
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["conversor3mf"]

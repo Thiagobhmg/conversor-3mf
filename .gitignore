@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.egg-info/
+build/
+dist/
+*.tmp
+# prévias e arquivos de modelos de terceiros não vão para o repositório
+/previa_*.png
+*.3mf
+!tests/**/*.3mf
