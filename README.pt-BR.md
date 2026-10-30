@@ -238,6 +238,11 @@ Para forçar uma língua, use `--idioma pt` (ou `en`, `es`) ou a variável
 - **Ilhas.** São triângulos ligados entre si com a mesma cor, depois de juntar vértices
   repetidos. Em triângulos com várias cores, a repintura só muda as partes da cor da ilha,
   inclusive na borda.
+- **Troca de cor por altura.** Alguns modelos não são pintados: o designer troca o filamento
+  em alturas fixas (por exemplo, preto a partir de 3,8 mm e branco de novo a partir de 7,6 mm).
+  Essas trocas também são convertidas, mas a tela Preparar do slicer mostra o modelo com menos
+  cores, às vezes uma só. As cores só aparecem na Pré-visualização depois de fatiar, então não
+  é preciso recolorir as peças à mão. O plano avisa quando o modelo funciona assim.
 
 ## Limitações
 
