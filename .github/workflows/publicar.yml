@@ -1,10 +1,10 @@
 name: publicar no PyPI
 
-# Roda quando uma versão (release) é publicada no GitHub. Usa "trusted publishing":
+# Roda quando uma tag de versão (ex.: v0.1.0) é enviada. Usa "trusted publishing":
 # o PyPI confia neste repositório e neste workflow, sem senha ou token guardado.
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
 
 jobs:
   testes:
