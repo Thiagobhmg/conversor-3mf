@@ -46,6 +46,9 @@ ao Claude que faça isso por você.
 - Uma **Kobra X** com ACE. Outras impressoras Anycubic podem funcionar, mas não foram
   testadas (veja [Limitações](#limitações)).
 
+**Testado com:** firmware 2.0.2.8 da Kobra X e Anycubic Slicer Next 2.0.0.3. Se você usa outras
+versões e algo se comportar diferente, abra uma issue informando as suas versões.
+
 ## Instalação
 
 ```bash

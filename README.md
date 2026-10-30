@@ -46,6 +46,9 @@ it for you.
 - An Anycubic **Kobra X** with ACE. Other Anycubic printers may work but are untested;
   see [Limitations](#limitations).
 
+**Tested with:** Kobra X firmware 2.0.2.8 and Anycubic Slicer Next 2.0.0.3. If you use other
+versions and something behaves differently, please open an issue with your versions.
+
 ## Install
 
 ```bash
