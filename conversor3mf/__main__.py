@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 from . import ace as modulo_ace
-from . import ilhas
+from . import ilhas, purga
 from .conversor import converter, planejar
 from .idiomas import VISTAS, detectar, nomes, texto, traduzir_argparse, vista_interna
 from .projeto import ler_projeto
@@ -42,9 +42,9 @@ def montar_parser(idioma: str) -> argparse.ArgumentParser:
     p.add_argument(*nomes("--idioma", idioma), dest="idioma", choices=["pt", "en", "es"], help=t("idioma"))
     sub = p.add_subparsers(title=t("comandos"), metavar="", required=True)
 
-    def comando(pai, chave: str, campo: str = "comando"):
+    def comando(pai, chave: str, campo: str = "comando", ajuda: str | None = None):
         principal, *apelidos = nomes(chave, idioma)
-        s = pai.add_parser(principal, aliases=apelidos, help=t(chave), description=t(chave))
+        s = pai.add_parser(principal, aliases=apelidos, help=t(ajuda or chave), description=t(ajuda or chave))
         s.set_defaults(**{campo: chave})
         return s
 
@@ -101,6 +101,21 @@ def montar_parser(idioma: str) -> argparse.ArgumentParser:
     opcao(a, "--cor", metavar=t("valor_cor"), help=t("ajuda_cor"))
     opcao(a, "--tipo", metavar=t("valor_tipo"), help=t("ajuda_tipo"))
     opcao(a, "--nome", metavar=t("valor_nome"), help=t("ajuda_nome"))
+
+    s = comando(sub, "purga")
+    acoes = s.add_subparsers(metavar="", required=True)
+    comando(acoes, "mostrar", "acao", ajuda="mostrar_purga")
+    a = comando(acoes, "ajustar", "acao")
+    a.add_argument("de", metavar=t("de"), help=t("ajuda_de"))
+    a.add_argument("para", metavar=t("para"), help=t("ajuda_para"))
+    a.add_argument("mudanca", metavar=t("mudanca"), help=t("ajuda_mudanca"))
+    a = comando(acoes, "nivel", "acao")
+    a.add_argument("valor", metavar=t("valor_nivel"), help=t("nivel"))
+    a = comando(acoes, "aprender", "acao")
+    a.add_argument("pastas", nargs="+", metavar=t("pastas"), help=t("ajuda_pastas"))
+    a = comando(acoes, "aplicar", "acao")
+    arquivo(a)
+    opcao(a, "--saida", metavar=t("caminho"), help=t("ajuda_saida"))
     return p
 
 
@@ -137,6 +152,18 @@ def main(argv: list[str] | None = None) -> int:
             _mostrar(modulo_ace.definir_molde(a.projeto).resumo())
         else:
             _mostrar(modulo_ace.alterar_slot(a.numero, a.cor, a.tipo, a.nome).resumo())
+    elif a.comando == "purga":
+        cores_ace = [s.cor for s in modulo_ace.carregar().slots] if a.acao in ("mostrar", "ajustar") else []
+        if a.acao == "mostrar":
+            _mostrar(purga.relatorio(cores_ace))
+        elif a.acao == "ajustar":
+            _mostrar(purga.ajustar_par(a.de, a.para, a.mudanca, cores_ace))
+        elif a.acao == "nivel":
+            _mostrar({"fator_geral": purga.definir_nivel(a.valor)})
+        elif a.acao == "aprender":
+            _mostrar({"pares_aprendidos": purga.aprender(a.pastas)})
+        else:
+            _mostrar(purga.aplicar_em_arquivo(a.arquivo, a.saida))
     return 0
 
 

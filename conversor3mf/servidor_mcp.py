@@ -8,7 +8,7 @@ from pathlib import Path
 from mcp.server.mcpserver import Image, MCPServer
 
 from . import ace as modulo_ace
-from . import ilhas
+from . import ilhas, purga
 from .conversor import converter, planejar
 from .projeto import ler_projeto
 from .verificar import verificar
@@ -26,6 +26,11 @@ mcp = MCPServer(
         "imagem com o número de cada região contínua de mesma cor (ilha). Olhe a imagem, escolha os números "
         "(use regiao para dar zoom se estiverem amontoados, e outra vista se a parte não aparecer de cima), "
         "confira tamanho/altura na lista e chame repintar_ilhas. Mostre a prévia ao usuário. "
+        "Purga (filamento descartado em cada troca de cor): se o usuário disser que uma cor manchou "
+        "depois de outra (ex.: 'o branco saiu acinzentado depois do preto'), chame ajustar_purga com "
+        "de=cor anterior, para=cor que manchou, mudanca='mais', e depois aplicar_purga no arquivo. "
+        "Se ele quiser economizar filamento, use nivel_purga('economia') ou ajuste pares com 'menos'. "
+        "A conversão já usa a calibração salva. "
         "Na primeira vez, se ver_ace disser que não há molde, peça ao usuário para sincronizar o ACE no "
         "Anycubic Slicer Next, salvar um projeto e informar o caminho para definir_molde_ace. "
         "Responda no idioma do usuário."
@@ -136,6 +141,47 @@ def repintar_ilhas(
     resultado["verificacao"] = verificar(resultado["arquivo_repintado"])
     png, _ = ilhas.mapa_de_ilhas(resultado["arquivo_repintado"], resultado["objeto"], "cima", rotulos=False)
     return [Image(data=png, format="png"), json.dumps(resultado, ensure_ascii=False)]
+
+
+def _cores_ace() -> list[str]:
+    return [s.cor for s in modulo_ace.carregar().slots]
+
+
+@mcp.tool()
+def ver_purga() -> dict:
+    """Mostra quanto filamento cada troca de cor do ACE purga (mm³ e gramas) e os ajustes salvos."""
+    return purga.relatorio(_cores_ace())
+
+
+@mcp.tool()
+def ajustar_purga(de: str, para: str, mudanca: str = "mais") -> dict:
+    """Calibra a purga de uma troca de cor e guarda para as próximas conversões.
+
+    de/para: número do slot do ACE ("2") ou cor (#RRGGBB). de = cor que estava no bico,
+    para = cor que entra (a que saiu manchada). mudanca: "mais" (+20%), "menos" (-20%) ou
+    um fator (ex.: "1.5"). Para valer num arquivo já convertido, chame aplicar_purga depois.
+    """
+    resultado = purga.ajustar_par(de, para, mudanca, _cores_ace())
+    return resultado | {"tabela": purga.relatorio(_cores_ace())["trocas"]}
+
+
+@mcp.tool()
+def nivel_purga(nivel: str) -> dict:
+    """Fator geral de purga: economia (0,85), normal (1,0), caprichado (1,25) ou um número."""
+    return {"fator_geral": purga.definir_nivel(nivel)}
+
+
+@mcp.tool()
+def aprender_purga(pastas_ou_arquivos: list[str]) -> dict:
+    """Aprende a purga que o Anycubic Slicer Next calculou em projetos salvos por ele (pastas ou .3mf)."""
+    return {"pares_aprendidos": purga.aprender(pastas_ou_arquivos)}
+
+
+@mcp.tool()
+def aplicar_purga(arquivo: str, saida: str | None = None) -> dict:
+    """Grava uma cópia do projeto (<nome>_purga.3mf) com a tabela de purga recalculada para as
+    cores dele, usando a calibração salva. Nunca sobrescreve."""
+    return purga.aplicar_em_arquivo(arquivo, saida)
 
 
 @mcp.tool()

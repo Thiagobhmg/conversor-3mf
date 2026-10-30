@@ -33,6 +33,9 @@ it for you.
   PLA/PETG mixes.
 - **Recolors whole regions ("islands").** Turns all holly leaves green or all stars red,
   including the side walls of raised details, without touching the paint brush.
+- **Tunes the purge for each color pair.** The purge table (how much filament is flushed on each
+  color change) is recalculated for the spools really in your ACE, and you can calibrate each pair:
+  "white came out gray after black" → more purge only for black → white.
 - **Never overwrites anything.** It writes `<name>_KobraX.3mf` next to the original.
 
 ## Requirements
@@ -166,6 +169,22 @@ preview of the result. Tips:
 For projects with more than one plate, also open the file in Anycubic Slicer Next and take
 a look (see [Limitations](#limitations)).
 
+**7. Calibrating the purge (color bleeding or too much waste)**
+
+Each color change flushes some filament. Too little and the old color stains the new one; too much
+wastes filament. After a print, tell Claude what you saw:
+
+> "The white came out grayish right after the black"
+>
+> "Show me how much each color change purges"
+>
+> "I want to save filament, use the economy purge level"
+
+Claude raises (or lowers) only that pair, by 20% each time, and remembers it for the next
+conversions. To apply it to a file you already converted: "apply the new purge to coaster_KobraX.3mf"
+(it writes `..._purga.3mf`). Tip: "learn the purge from my projects in C:\Prints" teaches it the
+values Anycubic Slicer Next calculated for your colors.
+
 **What Claude can't do:** start a print, change settings inside the slicer, or download
 models from MakerWorld. Download the 3MF yourself, then ask.
 
@@ -194,6 +213,7 @@ natural. Help and error messages follow the language you type in, or your system
 | `--map` `--output` `--no-verify` | `--mapa` `--saida` `--sem-verificar` | `--mapa` `--salida` `--sin-verificar` |
 | `--view top/bottom/front/back/left/right` | `--vista cima/baixo/frente/tras/esquerda/direita` | `--vista arriba/abajo/frente/atras/izquierda/derecha` |
 | `--color` `--type` `--name` | `--cor` `--tipo` `--nome` | `--color` `--tipo` `--nombre` |
+| `purge show` / `adjust 2 1 more` / `level economy` / `learn` / `apply` | `purga mostrar` / `ajustar 2 1 mais` / `nivel economia` / `aprender` / `aplicar` | `purga mostrar` / `ajustar 2 1 más` / `nivel economía` / `aprender` / `aplicar` |
 
 Force a language with `--language en` (or `pt`, `es`) or the `CONVERSOR3MF_IDIOMA`
 variable. Run `conversor3mf --help` for the full list.
@@ -206,6 +226,10 @@ variable. Run `conversor3mf --help` for the full list.
   the file is left untouched.
 - **Printer settings.** They come from a project saved by your own Anycubic Slicer Next,
   so no Anycubic profiles are shipped with this package.
+- **Purge.** The Kobra X firmware reads the purge table (`flush_volumes_matrix`) from the G-code
+  header and flushes by itself; the real purge is table × `flush_multiplier` (0.7). Each pair uses the
+  value Anycubic Slicer Next calculated for it in your saved projects, or the OrcaSlicer formula plus
+  the nozzle volume, times your calibration.
 - **Islands.** Connected triangles of the same color, after welding duplicate vertices.
   When a triangle has several colors, recoloring only changes the leaves of that island's
   color, including on the island's border.

@@ -1,6 +1,6 @@
 [project]
 name = "conversor3mf"
-version = "0.2.1"
+version = "0.3.0"
 description = "Convert Bambu Lab / MakerWorld multicolor 3MF projects to the Anycubic Kobra X, in the slot order of your ACE, with an MCP server for Claude"
 readme = "README.md"
 license = "MIT"

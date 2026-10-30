@@ -14,7 +14,7 @@ import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from . import cores
+from . import cores, purga
 from .config import pasta_dados, pasta_perfis
 
 __all__ = ["Slot", "Ace", "definir_molde", "carregar", "alterar_slot", "aplicar_slots"]
@@ -129,6 +129,7 @@ def definir_molde(projeto_3mf: str | Path) -> Ace:
     (pasta_dados() / ARQUIVO_MOLDE).write_text(json.dumps(config, indent=1, ensure_ascii=False), encoding="utf8")
     ace = Ace(slots=slots, molde=config, origem=str(projeto_3mf))
     salvar_slots(ace)
+    purga.aprender([projeto_3mf])  # guarda a purga que o slicer calculou para essas cores
     return ace
 
 

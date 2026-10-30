@@ -33,6 +33,9 @@ ao Claude que faça isso por você.
 - **Repinta regiões inteiras ("ilhas").** Por exemplo, todas as folhas de azevinho em
   verde ou todas as estrelas em vermelho, inclusive as laterais de detalhes em relevo,
   sem usar o pincel.
+- **Ajusta a purga para cada par de cores.** A tabela de purga (quanto filamento é descartado em cada
+  troca de cor) é recalculada para os carretéis que estão de fato no seu ACE, e você pode calibrar cada
+  par: "o branco saiu acinzentado depois do preto" → mais purga só de preto → branco.
 - **Nunca sobrescreve nada.** Grava `<nome>_KobraX.3mf` ao lado do original.
 
 ## Requisitos
@@ -167,6 +170,22 @@ uma prévia do resultado. Dicas:
 Em projetos com mais de uma placa, abra também o arquivo no Anycubic Slicer Next e dê uma
 olhada (veja [Limitações](#limitações)).
 
+**7. Calibrando a purga (cor manchada ou desperdício demais)**
+
+Cada troca de cor descarta um pouco de filamento. Pouco demais e a cor anterior mancha a nova; demais
+desperdiça filamento. Depois de uma impressão, conte ao Claude o que você viu:
+
+> "O branco saiu acinzentado logo depois do preto"
+>
+> "Mostra quanto cada troca de cor purga"
+>
+> "Quero economizar filamento, usa a purga no nível economia"
+
+O Claude aumenta (ou diminui) só aquele par, 20% por vez, e lembra disso nas próximas conversões.
+Para valer num arquivo já convertido: "aplica a purga nova no porta-copos_KobraX.3mf" (grava
+`..._purga.3mf`). Dica: "aprende a purga dos meus projetos em C:\Impressoes" ensina os valores que o
+Anycubic Slicer Next calculou para as suas cores.
+
 **O que o Claude não faz:** iniciar a impressão, mudar configurações dentro do slicer ou
 baixar modelos do MakerWorld. Baixe o 3MF você mesmo e depois peça.
 
@@ -196,6 +215,7 @@ comando, ou na língua do sistema:
 | `--mapa` `--saida` `--sem-verificar` | `--map` `--output` `--no-verify` | `--mapa` `--salida` `--sin-verificar` |
 | `--vista cima/baixo/frente/tras/esquerda/direita` | `--view top/bottom/front/back/left/right` | `--vista arriba/abajo/frente/atras/izquierda/derecha` |
 | `--cor` `--tipo` `--nome` | `--color` `--type` `--name` | `--color` `--tipo` `--nombre` |
+| `purga mostrar` / `ajustar 2 1 mais` / `nivel economia` / `aprender` / `aplicar` | `purge show` / `adjust 2 1 more` / `level economy` / `learn` / `apply` | `purga mostrar` / `ajustar 2 1 más` / `nivel economía` / `aprender` / `aplicar` |
 
 Para forçar uma língua, use `--idioma pt` (ou `en`, `es`) ou a variável
 `CONVERSOR3MF_IDIOMA`. Rode `conversor3mf --help` para ver tudo.
@@ -208,6 +228,10 @@ Para forçar uma língua, use `--idioma pt` (ou `en`, `es`) ou a variável
   e codifica de novo. O resto do arquivo não é alterado.
 - **Configurações da impressora.** Vêm de um projeto salvo pelo seu próprio Anycubic
   Slicer Next, então o pacote não distribui perfis da Anycubic.
+- **Purga.** O firmware da Kobra X lê a tabela de purga (`flush_volumes_matrix`) do cabeçalho do
+  G-code e faz a purga sozinho; a purga real é tabela × `flush_multiplier` (0,7). Cada par usa o valor
+  que o Anycubic Slicer Next calculou para ele nos seus projetos salvos, ou a fórmula do OrcaSlicer
+  mais o volume do bico, vezes a sua calibração.
 - **Ilhas.** São triângulos ligados entre si com a mesma cor, depois de juntar vértices
   repetidos. Em triângulos com várias cores, a repintura só muda as partes da cor da ilha,
   inclusive na borda.

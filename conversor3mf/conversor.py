@@ -12,7 +12,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from . import ace as modulo_ace
-from . import cores, pintura
+from . import cores, pintura, purga
 from .projeto import CHAVES_FUNCAO, RE_PINTURA, Projeto, ler_projeto
 
 __all__ = ["Associacao", "Plano", "planejar", "converter", "Resultado"]
@@ -255,6 +255,7 @@ def _montar_config(projeto: Projeto, ace: modulo_ace.Ace, mapa: dict[int, int]) 
     config = copy.deepcopy(ace.molde)
     config.pop("_aplicativo", None)
     modulo_ace.aplicar_slots(config, ace)
+    purga.aplicar_no_config(config)  # tabela de purga para as cores reais dos slots
     fonte = projeto.config
 
     perfil, nome = _escolher_processo(config, fonte)
@@ -432,6 +433,8 @@ def converter(
             '<?xml version="1.0" encoding="UTF-8"?>\n<config>\n  <header>\n'
             '    <header_item key="X-ACNext-Client-Type" value="slicer"/>\n'
             f'    <header_item key="X-ACNext-Client-Version" value="{versao}"/>\n'
+            # marca o arquivo como gerado aqui (purga.aprender ignora esses arquivos)
+            '    <header_item key="X-Conversor3mf" value="1"/>\n'
             "  </header>\n</config>\n",
         )
     temporario.replace(destino)
