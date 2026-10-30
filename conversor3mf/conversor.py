@@ -196,6 +196,20 @@ def planejar(projeto: Projeto, ace: modulo_ace.Ace, manual: dict[int, int] | Non
             f"A impressão mistura {' e '.join(sorted(familias))}. Esses materiais grudam mal "
             "entre si; prefira slots do mesmo tipo quando as cores ficarem na mesma peça."
         )
+    trocas = sum(projeto.uso[a.filamento].trocas_de_camada for a in usadas)
+    if trocas:
+        so_altura = [a for a in usadas if projeto.uso[a.filamento].trocas_de_camada
+                     and not projeto.uso[a.filamento].pecas and not projeto.uso[a.filamento].triangulos]
+        plano.avisos.append(
+            f"Este modelo muda de cor por altura ({trocas} troca{'s' if trocas != 1 else ''} em alturas fixas). "
+            "Na tela Preparar do "
+            "slicer ele aparece com menos cores (às vezes uma só); as cores por altura só aparecem na "
+            "Pré-visualização depois de fatiar. Não é preciso recolorir as peças à mão."
+            + ((" A cor " if len(so_altura) == 1 else " As cores ")
+               + ", ".join(f"{a.nome_da_cor} (slot {a.slot})" for a in so_altura)
+               + (" só existe" if len(so_altura) == 1 else " só existem") + " nessas trocas por altura."
+               if so_altura else "")
+        )
     return plano
 
 

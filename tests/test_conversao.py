@@ -48,6 +48,8 @@ class TestConversao(Base):
         plano = planejar(ler_projeto(self.origem), ace.carregar())
         self.assertEqual(plano.mapa, {1: 3, 2: 1, 3: 4})  # vermelho, branco, verde
         self.assertTrue(any("PETG" in aviso for aviso in plano.avisos))
+        # a placa 2 tem uma troca de filamento por altura: o plano avisa
+        self.assertTrue(any("muda de cor por altura (1 troca em" in aviso for aviso in plano.avisos))
 
     def test_converter(self):
         r = converter(self.origem)
