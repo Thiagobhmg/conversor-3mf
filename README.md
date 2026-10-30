@@ -46,7 +46,7 @@ it for you.
 ## Install
 
 ```bash
-pip install git+https://github.com/JohnnyTrindade/conversor-3mf
+pip install conversor3mf
 ```
 
 ### Use with Claude (MCP)
@@ -54,6 +54,9 @@ pip install git+https://github.com/JohnnyTrindade/conversor-3mf
 ```bash
 claude mcp add conversor3mf --scope user -- conversor3mf-mcp
 ```
+
+If you use [uv](https://docs.astral.sh/uv/), you can skip the `pip install` step:
+`claude mcp add conversor3mf --scope user -- uvx --from conversor3mf conversor3mf-mcp`
 
 Then just ask, in any language:
 

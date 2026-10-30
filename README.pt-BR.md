@@ -46,7 +46,7 @@ ao Claude que faça isso por você.
 ## Instalação
 
 ```bash
-pip install git+https://github.com/JohnnyTrindade/conversor-3mf
+pip install conversor3mf
 ```
 
 ### Usando pelo Claude (MCP)
@@ -54,6 +54,9 @@ pip install git+https://github.com/JohnnyTrindade/conversor-3mf
 ```bash
 claude mcp add conversor3mf --scope user -- conversor3mf-mcp
 ```
+
+Se você usa o [uv](https://docs.astral.sh/uv/), dá para pular o `pip install`:
+`claude mcp add conversor3mf --scope user -- uvx --from conversor3mf conversor3mf-mcp`
 
 Depois é só pedir:
 
