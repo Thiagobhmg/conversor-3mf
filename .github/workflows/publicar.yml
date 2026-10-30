@@ -1,0 +1,46 @@
+name: publicar no PyPI
+
+# Roda quando uma versão (release) é publicada no GitHub. Usa "trusted publishing":
+# o PyPI confia neste repositório e neste workflow, sem senha ou token guardado.
+on:
+  release:
+    types: [published]
+
+jobs:
+  testes:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install .
+      - run: python -m unittest discover -s tests -v
+
+  pacote:
+    needs: testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install build
+      - run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publicar:
+    needs: pacote
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

@@ -1,5 +1,7 @@
 # conversor3mf
 
+[![testes](https://github.com/JohnnyTrindade/conversor-3mf/actions/workflows/testes.yml/badge.svg)](https://github.com/JohnnyTrindade/conversor-3mf/actions/workflows/testes.yml)
+
 **Imprima modelos multicoloridos do MakerWorld na Anycubic Kobra X sem recolorir nada.**
 [English](README.md)
 
