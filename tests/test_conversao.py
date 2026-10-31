@@ -111,6 +111,32 @@ class TestConversao(Base):
         self.assertFalse(r["conferido_no_slicer"])
 
 
+class TestTrocaDeTipo(Base):
+    def test_sem_perfis_recusa_e_nao_grava(self):
+        ace.alterar_slot(1, tipo="PETG")  # no molde o slot 1 é PLA
+        with self.assertRaises(ValueError) as erro:
+            converter(self.origem)
+        self.assertIn("perfis", str(erro.exception))
+        self.assertEqual(list(self.pasta.glob("modelo_KobraX*")), [])
+
+    def test_com_perfis_traz_o_filamento_do_molde(self):
+        slicer = self.pasta / "slicer"
+        filamento = slicer / "resources" / "profiles" / "Anycubic" / "filament"
+        filamento.mkdir(parents=True)
+        (filamento / "PETG.json").write_text(
+            json.dumps({"name": "PETG", "filament_type": ["PETG"], "nozzle_temperature": ["230"]}))
+        (slicer / "bin").mkdir()
+        (slicer / "bin" / "AnycubicSlicerNext").write_text("")
+        os.environ["CONVERSOR3MF_SLICER"] = str(slicer)
+
+        ace.alterar_slot(1, tipo="PETG")
+        config = json.loads(self.ler(converter(self.origem).destino, "Metadata/project_settings.config"))
+        # vem do slot 3 do molde, o primeiro PETG
+        self.assertEqual(config["filament_type"][0], "PETG")
+        self.assertEqual(config["nozzle_temperature"][0], "240")
+        self.assertEqual(config["filament_settings_id"][0], "Anycubic PETG @Anycubic Kobra X 0.4 nozzle")
+
+
 class TestIlhas(Base):
     def test_mapa_e_repintura(self):
         destino = Path(converter(self.origem).destino)
