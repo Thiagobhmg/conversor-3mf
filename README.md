@@ -264,6 +264,9 @@ The tests use synthetic 3MF files built in `tests/fixtures.py` and do not need t
 `ferramentas/testar_na_interface.ps1` opens a file in the slicer GUI, takes a screenshot
 and closes it.
 
+**Neste fork (Thiagobhmg/conversor-3mf):** regras de trabalho em [AGENTS.md](AGENTS.md);
+preparação do ambiente no Linux, testes e fluxo de PR em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
 ## License
 
 MIT
