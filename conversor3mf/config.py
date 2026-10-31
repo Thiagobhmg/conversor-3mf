@@ -1,8 +1,8 @@
-"""Onde ficam os dados do usuário e o Anycubic Slicer Next.
+"""Onde ficam os dados do usuário e o slicer (Anycubic Slicer Next ou OrcaSlicer).
 
 Variáveis de ambiente (opcionais):
 - CONVERSOR3MF_DADOS: pasta do molde e dos slots do ACE
-- CONVERSOR3MF_SLICER: pasta de instalação do Anycubic Slicer Next (ou o executável)
+- CONVERSOR3MF_SLICER: pasta de instalação do Anycubic Slicer Next ou do OrcaSlicer (ou o executável)
 """
 
 from __future__ import annotations
@@ -11,11 +11,16 @@ import os
 import sys
 from pathlib import Path
 
-__all__ = ["pasta_dados", "pasta_slicer", "executavel_slicer", "ambiente_slicer", "pasta_perfis"]
+__all__ = ["pasta_dados", "pasta_slicer", "executavel_slicer", "eh_orca", "ambiente_slicer", "pasta_perfis"]
 
 NOME_APP = "conversor3mf"
 # Linux: pasta do pacote do AUR (anycubicslicernext-bin), com bin/, lib/ e resources/
 PASTAS_LINUX = (Path("/opt/AnycubicSlicerNext"),)
+# executável dentro da pasta de instalação: Windows, macOS e Linux (pacote do AUR ou AppImage extraída)
+EXECUTAVEIS = (
+    "AnycubicSlicerNext.exe", "Contents/MacOS/AnycubicSlicerNext", "bin/AnycubicSlicerNext",
+    "orca-slicer.exe", "Contents/MacOS/OrcaSlicer", "bin/orca-slicer",
+)
 
 
 def pasta_dados() -> Path:
@@ -93,11 +98,14 @@ def executavel_slicer(pasta: Path | None = None) -> Path | None:
     pasta = pasta if pasta is not None else pasta_slicer()
     if pasta is None:
         return None
-    for p in (pasta / "AnycubicSlicerNext.exe", pasta / "Contents" / "MacOS" / "AnycubicSlicerNext",
-              pasta / "bin" / "AnycubicSlicerNext"):
-        if p.is_file():
-            return p
+    for relativo in EXECUTAVEIS:
+        if (pasta / relativo).is_file():
+            return pasta / relativo
     return None
+
+
+def eh_orca(executavel: Path) -> bool:
+    return executavel.name.lower().startswith("orca")
 
 
 def ambiente_slicer(executavel: Path) -> dict[str, str] | None:

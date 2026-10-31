@@ -267,9 +267,10 @@ def _escolher_processo(config: dict, fonte: dict) -> tuple[dict | None, str, str
     preferido = _estilo_original(fonte)
     estilos = [preferido] + [e for e in ("Standard", "High Quality", "Draft", "Extra Draft") if e != preferido]
     for estilo in estilos:
-        nome = f"{altura:.2f}mm {estilo} @{impressora}"
-        perfil = modulo_ace.perfil_de_processo(nome)
+        perfil = modulo_ace.perfil_de_processo(f"{altura:.2f}mm {estilo} @{impressora}")
         if perfil:
+            # o arquivo leva o bico no nome; no OrcaSlicer o nome do preset não ("… @Anycubic Kobra X")
+            nome = perfil.get("name") or f"{altura:.2f}mm {estilo} @{impressora}"
             aviso = None if estilo == preferido else (
                 f"O processo original é {fonte.get('print_settings_id')}, mas a {impressora} não tem perfil "
                 f"{preferido} em {altura:.2f} mm; usei {nome}.")
