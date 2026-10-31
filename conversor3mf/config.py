@@ -11,9 +11,11 @@ import os
 import sys
 from pathlib import Path
 
-__all__ = ["pasta_dados", "pasta_slicer", "executavel_slicer", "pasta_perfis"]
+__all__ = ["pasta_dados", "pasta_slicer", "executavel_slicer", "ambiente_slicer", "pasta_perfis"]
 
 NOME_APP = "conversor3mf"
+# Linux: pasta do pacote do AUR (anycubicslicernext-bin), com bin/, lib/ e resources/
+PASTAS_LINUX = (Path("/opt/AnycubicSlicerNext"),)
 
 
 def pasta_dados() -> Path:
@@ -70,7 +72,8 @@ def pasta_slicer() -> Path | None:
         return None  # usado nos testes: finge que o slicer não está instalado
     if escolhido:
         p = Path(escolhido)
-        candidatos.append(p.parent if p.is_file() else p)
+        # o executável fica na pasta de instalação (Windows) ou em bin/ dentro dela (Linux)
+        candidatos += [p.parent, p.parent.parent] if p.is_file() else [p]
     candidatos += _do_registro()
     if sys.platform == "win32":
         for base in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"), os.environ.get("LOCALAPPDATA")):
@@ -78,6 +81,8 @@ def pasta_slicer() -> Path | None:
                 candidatos += [Path(base) / "AnycubicSlicerNext", Path(base) / "Programs" / "AnycubicSlicerNext"]
     elif sys.platform == "darwin":
         candidatos.append(Path("/Applications/AnycubicSlicerNext.app"))
+    else:
+        candidatos += PASTAS_LINUX
     for c in candidatos:
         if executavel_slicer(c) is not None:
             return c
@@ -88,10 +93,27 @@ def executavel_slicer(pasta: Path | None = None) -> Path | None:
     pasta = pasta if pasta is not None else pasta_slicer()
     if pasta is None:
         return None
-    for p in (pasta / "AnycubicSlicerNext.exe", pasta / "Contents" / "MacOS" / "AnycubicSlicerNext"):
+    for p in (pasta / "AnycubicSlicerNext.exe", pasta / "Contents" / "MacOS" / "AnycubicSlicerNext",
+              pasta / "bin" / "AnycubicSlicerNext"):
         if p.is_file():
             return p
     return None
+
+
+def ambiente_slicer(executavel: Path) -> dict[str, str] | None:
+    """Variáveis para rodar o slicer; None = herda o ambiente atual.
+
+    No Linux o binário de bin/ precisa das bibliotecas de lib/ (o lançador do pacote faz o
+    mesmo) e de ponto decimal: com LC_NUMERIC em pt_BR ele lê "0,5" e quebra.
+    """
+    if sys.platform in ("win32", "darwin"):
+        return None
+    ambiente = dict(os.environ, LC_NUMERIC="C")
+    bibliotecas = executavel.parent.parent / "lib"
+    if bibliotecas.is_dir():
+        ambiente["LD_LIBRARY_PATH"] = os.pathsep.join(
+            filter(None, [str(bibliotecas), os.environ.get("LD_LIBRARY_PATH")]))
+    return ambiente
 
 
 def pasta_perfis() -> Path | None:
