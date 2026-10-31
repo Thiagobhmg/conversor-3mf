@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import html
 import itertools
 import json
 import math
@@ -290,8 +291,10 @@ def _montar_config(
     projeto: Projeto, ace: modulo_ace.Ace, mapa: dict[int, int]
 ) -> tuple[dict, str, dict, list[str]]:
     config = copy.deepcopy(ace.molde)
-    config.pop("_aplicativo", None)
+    for chave in ("_aplicativo", "_orcaslicer", "_cabecalho"):  # identidade do molde, não é configuração
+        config.pop(chave, None)
     modulo_ace.aplicar_slots(config, ace)
+    modulo_ace.diferencas_dos_filamentos(config)
     purga.aplicar_no_config(config)  # tabela de purga para as cores reais dos slots
     fonte = projeto.config
 
@@ -358,8 +361,15 @@ def _posicoes_por_placa(model_settings: str) -> dict[tuple[str, int], int]:
     return placa_de
 
 
-def _ajustar_principal(texto: str, projeto: Projeto, config: dict, aplicativo: str) -> str:
+def _ajustar_principal(
+    texto: str, projeto: Projeto, config: dict, aplicativo: str, orcaslicer: str | None = None
+) -> str:
     texto = re.sub(r'(<metadata name="Application">)[^<]*(<)', rf"\g<1>{aplicativo}\g<2>", texto)
+    # a marca do OrcaSlicer vem do molde: com ela o Orca abre o arquivo como projeto dele
+    texto = re.sub(r'[ \t]*<metadata name="OrcaSlicer">[^<]*</metadata>\r?\n?', "", texto)
+    if orcaslicer:
+        texto = re.sub(r'(<metadata name="Application">[^<]*</metadata>)',
+                       lambda m: f'{m.group(1)}\n <metadata name="OrcaSlicer">{orcaslicer}</metadata>', texto, count=1)
     if projeto.impressora == config.get("printer_model"):
         return texto
     placa_de = _posicoes_por_placa(projeto.model_settings)
@@ -471,18 +481,22 @@ def converter(
             elif nome.startswith("3D/") and nome.endswith(".model"):
                 texto = dados.decode("utf8")
                 if nome == "3D/3dmodel.model":
-                    texto = _ajustar_principal(texto, projeto, config, aplicativo)
+                    texto = _ajustar_principal(texto, projeto, config, aplicativo, ace.molde.get("_orcaslicer"))
                 texto = RE_PINTURA.sub(nova_pintura, texto)
                 dados = texto.encode("utf8")
             saida.writestr(info, dados, compress_type=zipfile.ZIP_DEFLATED)
         versao = config.get("version", "2.0.0.3")
+        # o cabeçalho do slicer que gravou o molde (moldes antigos não o guardaram)
+        cabecalho = ace.molde.get("_cabecalho") or [
+            ["X-ACNext-Client-Type", "slicer"], ["X-ACNext-Client-Version", versao]]
+        itens = "".join(f'    <header_item key="{html.escape(chave)}" value="{html.escape(valor)}"/>\n'
+                        for chave, valor in cabecalho if chave != "X-Conversor3mf")
         saida.writestr(
             "Metadata/slice_info.config",
             '<?xml version="1.0" encoding="UTF-8"?>\n<config>\n  <header>\n'
-            '    <header_item key="X-ACNext-Client-Type" value="slicer"/>\n'
-            f'    <header_item key="X-ACNext-Client-Version" value="{versao}"/>\n'
+            + itens
             # marca o arquivo como gerado aqui (purga.aprender ignora esses arquivos)
-            '    <header_item key="X-Conversor3mf" value="1"/>\n'
+            + '    <header_item key="X-Conversor3mf" value="1"/>\n'
             "  </header>\n</config>\n",
         )
     temporario.replace(destino)

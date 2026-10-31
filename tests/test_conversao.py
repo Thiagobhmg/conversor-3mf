@@ -190,6 +190,29 @@ class TestTrocaDeTipo(Base):
         self.assertEqual(config["filament_settings_id"][0], "Anycubic PETG @Anycubic Kobra X 0.4 nozzle")
 
 
+class TestDiferencasDosFilamentos(Base):
+    """O projeto lista o que cada slot muda no perfil do filamento: o OrcaSlicer só mantém isso."""
+
+    def test_lista_o_que_difere_do_perfil_de_sistema(self):
+        slicer = self.pasta / "slicer"
+        filamento = slicer / "resources" / "profiles" / "Anycubic" / "filament"
+        filamento.mkdir(parents=True)
+        (slicer / "AnycubicSlicerNext.exe").write_text("")
+        perfis = {
+            "Anycubic PLA @Anycubic Kobra X 0.4 nozzle": {"filament_type": ["PLA"], "nozzle_temperature": ["210"]},
+            "fdm_filament_pet": {"nozzle_temperature": ["230"]},
+            "Anycubic PETG @Anycubic Kobra X 0.4 nozzle": {"inherits": "fdm_filament_pet", "filament_type": ["PETG"]},
+        }
+        for nome, perfil in perfis.items():
+            (filamento / f"{nome}.json").write_text(json.dumps({"name": nome, **perfil}))
+        os.environ["CONVERSOR3MF_SLICER"] = str(slicer)
+
+        config = json.loads(self.ler(converter(self.origem).destino, "Metadata/project_settings.config"))
+        # molde: PLA 210, PLA 210, PETG 240, PETG 240; o PETG do sistema (herdado) é 230
+        self.assertEqual(config["different_settings_to_system"][1:5], ["", "", "nozzle_temperature", "nozzle_temperature"])
+        self.assertEqual(config["different_settings_to_system"][-1], "")  # impressora de sistema
+
+
 class TestEscolhasDoDesigner(Base):
     """Só vai para a Kobra X o que o designer mudou no perfil dele (different_settings_to_system)."""
 
@@ -228,6 +251,59 @@ class TestEscolhasDoDesigner(Base):
         # projetos que não dizem o que o designer mudou seguem como antes
         _, config = self.converter_com()
         self.assertEqual(config["elefant_foot_compensation"], "0.075")
+
+
+class TestIdentidadeDoSlicer(Base):
+    """O convertido se apresenta como gravado pelo slicer do molde (OrcaSlicer ou Anycubic)."""
+
+    @staticmethod
+    def regravar(caminho, trocas):
+        with zipfile.ZipFile(caminho) as z:
+            itens = {n: z.read(n) for n in z.namelist()}
+        itens.update(trocas)
+        with zipfile.ZipFile(caminho, "w") as z:
+            for nome, dados in itens.items():
+                z.writestr(nome, dados)
+
+    def molde_com(self, aplicativo, metadados_extra, cabecalho):
+        molde = criar_molde_anycubic(self.pasta / "molde-slicer.3mf")
+        self.regravar(molde, {
+            "3D/3dmodel.model": ('<?xml version="1.0" encoding="UTF-8"?>\n<model unit="millimeter">\n'
+                                 f' <metadata name="Application">{aplicativo}</metadata>\n{metadados_extra}'
+                                 '<resources/><build/></model>'),
+            "Metadata/slice_info.config": ('<?xml version="1.0" encoding="UTF-8"?>\n<config>\n  <header>\n'
+                                           + "".join(f'    <header_item key="{k}" value="{v}"/>\n'
+                                                     for k, v in cabecalho)
+                                           + "  </header>\n</config>\n"),
+        })
+        ace.definir_molde(molde)
+
+    def test_molde_do_orcaslicer(self):
+        self.molde_com("BambuStudio-02.06.00.51", ' <metadata name="OrcaSlicer">2.4.2</metadata>\n',
+                       [("X-BBL-Client-Type", "slicer"), ("X-BBL-Client-Version", "02.06.00.51"),
+                        ("OrcaSlicer-Version", "2.4.2")])
+        destino = converter(self.origem).destino
+        principal = self.ler(destino, "3D/3dmodel.model")
+        self.assertIn('<metadata name="Application">BambuStudio-02.06.00.51</metadata>', principal)
+        self.assertEqual(principal.count('<metadata name="OrcaSlicer">2.4.2</metadata>'), 1)
+        info = self.ler(destino, "Metadata/slice_info.config")
+        self.assertIn('key="OrcaSlicer-Version" value="2.4.2"', info)
+        self.assertIn('key="X-Conversor3mf"', info)
+        self.assertNotIn("X-ACNext", info)
+        config = json.loads(self.ler(destino, "Metadata/project_settings.config"))
+        self.assertEqual([k for k in config if k.startswith("_")], [])
+
+    def test_molde_do_anycubic_tira_a_marca_do_orca_do_original(self):
+        self.molde_com("BambuStudio-2.0.0.5", "",
+                       [("X-ACNext-Client-Type", "slicer"), ("X-ACNext-Client-Version", "2.0.0.5 20260913145557")])
+        principal = self.ler(self.origem, "3D/3dmodel.model").replace(
+            "</metadata>\n", '</metadata>\n <metadata name="OrcaSlicer">2.4.2</metadata>\n', 1)
+        self.regravar(self.origem, {"3D/3dmodel.model": principal})
+        destino = converter(self.origem).destino
+        self.assertNotIn('name="OrcaSlicer"', self.ler(destino, "3D/3dmodel.model"))
+        info = self.ler(destino, "Metadata/slice_info.config")
+        self.assertIn('key="X-ACNext-Client-Version" value="2.0.0.5 20260913145557"', info)
+        self.assertIn('key="X-Conversor3mf"', info)
 
 
 class TestIlhas(Base):

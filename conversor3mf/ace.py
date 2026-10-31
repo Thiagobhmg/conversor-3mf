@@ -67,16 +67,56 @@ def _chaves_de_filamento() -> set[str]:
                      "filament_id"}
 
 
-def perfil_de_processo(nome: str) -> dict | None:
+def _perfil(tipo: str, nome: str) -> dict | None:
+    """Perfil de sistema (process, filament ou machine) com a herança resolvida."""
     perfis = pasta_perfis()
-    caminho = perfis / "process" / f"{nome}.json" if perfis else None
+    caminho = perfis / tipo / f"{nome}.json" if perfis else None
     if caminho is None or not caminho.exists():
         return None
     perfil = json.loads(caminho.read_text(encoding="utf8"))
     if perfil.get("inherits"):
-        base = perfil_de_processo(perfil["inherits"]) or {}
+        base = _perfil(tipo, perfil["inherits"]) or {}
         perfil = {**base, **perfil}
     return perfil
+
+
+def perfil_de_processo(nome: str) -> dict | None:
+    return _perfil("process", nome)
+
+
+def _iguais(a, b) -> bool:
+    try:
+        return float(a) == float(b)
+    except (TypeError, ValueError):
+        return str(a) == str(b)
+
+
+def diferencas_dos_filamentos(config: dict) -> None:
+    """Lista em different_settings_to_system[1..n] as chaves em que cada slot difere do perfil
+    de sistema do seu filamento.
+
+    Ao abrir um projeto, o OrcaSlicer parte do preset pelo nome e só mantém do arquivo as
+    chaves listadas ali: sem a lista, o padrão de PETG do molde (236 °C…) volta ao de fábrica.
+    """
+    diferencas = config.get("different_settings_to_system")
+    ids = config.get("filament_settings_id") or []
+    if not isinstance(diferencas, list) or len(diferencas) < len(ids) + 2:
+        return
+    chaves = _chaves_de_filamento() - {"filament_colour", "filament_colour_info", "filament_settings_id",
+                                       "default_filament_colour"}  # cor e nome vêm do slot
+    for i, nome in enumerate(ids):
+        perfil = _perfil("filament", nome)
+        if not perfil:
+            continue
+        mudou = []
+        for chave in sorted(chaves & set(perfil)):
+            valores = config.get(chave)
+            if not isinstance(valores, list) or len(valores) != len(ids):
+                continue
+            padrao = perfil[chave][0] if isinstance(perfil[chave], list) and perfil[chave] else perfil[chave]
+            if not _iguais(valores[i], padrao):
+                mudou.append(chave)
+        diferencas[1 + i] = ";".join(mudou)
 
 
 CHAVES_META = {"type", "from", "setting_id", "is_custom_defined", "instantiation", "version",
@@ -84,13 +124,15 @@ CHAVES_META = {"type", "from", "setting_id", "is_custom_defined", "instantiation
 
 
 def definir_molde(projeto_3mf: str | Path) -> Ace:
-    """Lê um projeto salvo pelo Anycubic Slicer Next e grava molde + slots em dados/."""
+    """Lê um projeto salvo pelo slicer (Anycubic Slicer Next ou OrcaSlicer) e grava molde + slots em dados/."""
     projeto_3mf = Path(projeto_3mf)
     with zipfile.ZipFile(projeto_3mf) as arquivo:
         config = json.loads(arquivo.read("Metadata/project_settings.config"))
         principal = arquivo.read("3D/3dmodel.model").decode("utf8")
         embutidos = [n for n in arquivo.namelist()
                      if re.match(r"Metadata/(machine|filament|process)_settings_\d+\.config$", n)]
+        info = (arquivo.read("Metadata/slice_info.config").decode("utf8", "replace")
+                if "Metadata/slice_info.config" in arquivo.namelist() else "")
     if not str(config.get("printer_model", "")).startswith("Anycubic"):
         raise ValueError(f"o projeto é de {config.get('printer_model')}, preciso de um salvo para a impressora Anycubic")
     diferencas = config.get("different_settings_to_system") or []
@@ -113,6 +155,14 @@ def definir_molde(projeto_3mf: str | Path) -> Ace:
             diferencas[0] = ""
     app = re.search(r'<metadata name="Application">([^<]*)<', principal)
     config["_aplicativo"] = app.group(1) if app else f"BambuStudio-{config.get('version', '2.0.0.3')}"
+    # identidade do slicer que gravou o molde: sem ela o OrcaSlicer abre o convertido como
+    # "projeto do Bambu Studio", com aviso, e descarta os valores do arquivo
+    orca = re.search(r'<metadata name="OrcaSlicer">([^<]*)<', principal)
+    if orca:
+        config["_orcaslicer"] = orca.group(1)
+    cabecalho = re.findall(r'<header_item key="([^"]+)" value="([^"]*)"', info)
+    if cabecalho:
+        config["_cabecalho"] = [[chave, valor] for chave, valor in cabecalho]
 
     n = len(config.get("filament_colour") or [])
     slots = [
