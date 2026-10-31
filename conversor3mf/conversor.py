@@ -278,9 +278,17 @@ def _escolher_processo(config: dict, fonte: dict) -> tuple[dict | None, str, str
     return None, config.get("print_settings_id", ""), None
 
 
+def _escolhas_do_designer(fonte: dict) -> set[str] | None:
+    """Chaves de processo que o designer mudou no perfil dele; None se o arquivo não diz."""
+    diferencas = fonte.get("different_settings_to_system")
+    if not isinstance(diferencas, list) or not diferencas or not isinstance(diferencas[0], str):
+        return None
+    return {chave for chave in diferencas[0].split(";") if chave}
+
+
 def _montar_config(
     projeto: Projeto, ace: modulo_ace.Ace, mapa: dict[int, int]
-) -> tuple[dict, str, dict, str | None]:
+) -> tuple[dict, str, dict, list[str]]:
     config = copy.deepcopy(ace.molde)
     config.pop("_aplicativo", None)
     modulo_ace.aplicar_slots(config, ace)
@@ -288,13 +296,24 @@ def _montar_config(
     fonte = projeto.config
 
     perfil, nome, aviso_processo = _escolher_processo(config, fonte)
+    avisos = [aviso_processo] if aviso_processo else []
     if perfil:
         for chave, valor in perfil.items():
             if chave not in modulo_ace.CHAVES_META and chave in config:
                 config[chave] = valor
         config["print_settings_id"] = nome
+    # o resto do perfil de origem são padrões da outra impressora (às vezes inválidos aqui);
+    # a altura de camada é a escolha do perfil e não aparece como diferença
+    escolhas = _escolhas_do_designer(fonte)
+    if escolhas is not None:
+        fora = sorted(escolhas - set(CHAVES_DO_MODELO) - set(CHAVES_FUNCAO))
+        if fora:
+            avisos.append(f"O designer também mudou {', '.join(fora)}; esses ajustes são da impressora dele "
+                          "(ou de velocidade e temperatura) e ficam com o perfil da Kobra X.")
     alteradas: dict = {}
     for chave in CHAVES_DO_MODELO:
+        if escolhas is not None and chave != "layer_height" and chave not in escolhas:
+            continue
         if chave in fonte and chave in config and type(fonte[chave]) is type(config[chave]):
             if fonte[chave] != config[chave]:
                 alteradas[chave] = fonte[chave]
@@ -309,7 +328,7 @@ def _montar_config(
     diferencas = config.get("different_settings_to_system")
     if isinstance(diferencas, list) and diferencas:
         diferencas[0] = ";".join(sorted(alteradas))
-    return config, nome, alteradas, aviso_processo
+    return config, nome, alteradas, avisos
 
 
 def _remapear_model_settings(texto: str, mapa: dict[int, int], n_slots: int) -> str:
@@ -415,9 +434,9 @@ def converter(
     if destino.exists():
         raise ValueError(f"{destino} já existe; escolha outro nome")
 
-    config, processo, alteradas, aviso_processo = _montar_config(projeto, ace, mapa)
+    config, processo, alteradas, avisos_config = _montar_config(projeto, ace, mapa)
     aplicativo = ace.molde.get("_aplicativo", f"BambuStudio-{config.get('version', '2.0.0.3')}")
-    avisos = list(plano.avisos) + ([aviso_processo] if aviso_processo else [])
+    avisos = list(plano.avisos) + avisos_config
     if projeto.fatiado:
         avisos.append("O arquivo original estava fatiado; o G-code dele foi descartado. Fatie de novo no slicer.")
     ax0, ay0, ax1, ay1 = _area(projeto.config)
