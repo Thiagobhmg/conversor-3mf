@@ -113,8 +113,9 @@ gh pr create -R Thiagobhmg/conversor-3mf --base main --draft \
 gh pr ready <N> -R Thiagobhmg/conversor-3mf             # quando estiver completo
 ```
 
-O GitHub Actions do fork pode rodar o `testes.yml` do autor (Windows e Ubuntu) nos pushes. Esse resultado
-complementa a validação local, mas não a substitui.
+Os workflows do autor (`testes.yml`, em Windows e Ubuntu) **não rodam no fork**: o GitHub os deixa desligados em
+forks até alguém ligá-los na aba Actions (conferido no PR #7, sem checks). A validação é local; ligar os workflows
+é decisão do usuário e daria uma conferência no Windows que não temos aqui.
 
 Merge em *squash*, com o OK do usuário. Depois do merge, na raiz:
 
