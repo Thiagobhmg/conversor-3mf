@@ -17,6 +17,7 @@ conversor-3mf/                        raiz fixa: checkout principal, sempre na m
 ├── tests/                            unittest com 3MF sintéticos
 ├── ferramentas/                      script de teste na interface (Windows)
 ├── docs/                             este arquivo
+├── thoughts/research/  plans/        RPI: pesquisa e plano de cada Issue (AGENTS.md §2)
 └── .github/                          modelos de Issue e PR; workflows do autor
 ```
 

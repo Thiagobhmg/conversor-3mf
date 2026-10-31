@@ -56,6 +56,20 @@ curtas, testes com 3MF sintéticos em `tests/fixtures.py`).
 Diferencie sempre **implementação concluída**, **PR aberto**, **merge feito** e **em uso validado** (instalado e
 conferido com um arquivo real).
 
+### Desenvolvimento em RPI (Research, Plan, Implement)
+
+Mudanças de código seguem o RPI, dentro do worktree da Issue:
+
+1. **Research:** documente o código como ele é hoje, sem propor mudanças, em
+   `thoughts/research/<n>-<slug>.md` (arquivos, funções, fluxo, testes existentes, fatos do ambiente).
+2. **Plan:** desenhe a implementação a partir da pesquisa em `thoughts/plans/<n>-<slug>.md`, com fases e critérios
+   de sucesso verificáveis.
+3. **Implement:** execute fase por fase, verificando cada uma, e atualize o plano conforme avança (fase concluída,
+   desvio e motivo).
+
+Os documentos de `thoughts/` são versionados no fork, em commits separados dos de código e testes, e não vão para o
+upstream.
+
 ## 3. Worktrees e arquivos locais
 
 - A **raiz fixa** é o checkout principal (a pasta que contém o `.git`). Ele fica na `main`, sem edições diretas.
@@ -83,8 +97,9 @@ conferido com um arquivo real).
 ## 5. Relação com o upstream
 
 - Remotos: `origin` = `Thiagobhmg/conversor-3mf`, `upstream` = `JohnnyTrindade/conversor-3mf`.
-- Os arquivos de organização do fork (`AGENTS.md`, `CLAUDE.md`, `docs/DEVELOPMENT.md`, `.github/ISSUE_TEMPLATE/`,
-  `.github/PULL_REQUEST_TEMPLATE.md`, as linhas do fork no `.gitignore` e no `README.md`) **não vão para o upstream**.
+- Os arquivos de organização do fork (`AGENTS.md`, `CLAUDE.md`, `docs/DEVELOPMENT.md`, `thoughts/`,
+  `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, as linhas do fork no `.gitignore` e no `README.md`)
+  **não vão para o upstream**.
 - Mantenha commits de código e testes separados dos de organização, para a contribuição sair por *cherry-pick* limpo.
   A contribuição usa uma branch `contrib/<n>-<slug>` criada a partir de `upstream/main`, só com esses commits.
 - **Contribuir com o autor é ação externa:** só com o OK explícito do usuário (procedimento em
@@ -109,6 +124,7 @@ conferido com um arquivo real).
 AGENTS.md  CLAUDE.md          instruções (este arquivo é a fonte)
 README*.md                    documentação de uso do autor (en, pt-BR, es)
 docs/DEVELOPMENT.md           procedimentos, ambiente, validação, upstream
+thoughts/research/  plans/    pesquisa e planos do RPI, por Issue (só no fork)
 conversor3mf/                 pacote: CLI (__main__.py), servidor MCP, conversão, ACE, purga, ilhas
 tests/                        unittest com 3MF sintéticos (fixtures.py)
 ferramentas/                  testar_na_interface.ps1 (Windows, abre o slicer e captura a tela)
