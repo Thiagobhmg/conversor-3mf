@@ -120,9 +120,11 @@ class TestEstiloDoProcesso(Base):
         processos = slicer / "resources" / "profiles" / "Anycubic" / "process"
         processos.mkdir(parents=True)
         (slicer / "AnycubicSlicerNext.exe").write_text("")
+        self.processos = processos
         for nome, velocidade in (("0.16mm Standard", "250"), ("0.16mm High Quality", "100"), ("0.08mm Standard", "250")):
+            # no Anycubic Slicer Next o nome do preset é o do arquivo
             (processos / f"{nome} @Anycubic Kobra X 0.4 nozzle.json").write_text(
-                json.dumps({"name": nome, "sparse_infill_speed": velocidade}))
+                json.dumps({"name": f"{nome} @Anycubic Kobra X 0.4 nozzle", "sparse_infill_speed": velocidade}))
         os.environ["CONVERSOR3MF_SLICER"] = str(slicer)
 
     def converter_com(self, processo, altura="0.16"):
@@ -152,6 +154,14 @@ class TestEstiloDoProcesso(Base):
         r, config = self.converter_com("0.08mm High Quality @BBL A1", altura="0.08")
         self.assertEqual(config["print_settings_id"], "0.08mm Standard @Anycubic Kobra X 0.4 nozzle")
         self.assertTrue(any("0.08mm High Quality @BBL A1" in a and "High Quality" in a for a in r.avisos))
+
+    def test_grava_o_nome_do_preset_do_orcaslicer(self):
+        # no OrcaSlicer o arquivo leva o bico no nome, o preset não
+        (self.processos / "0.16mm High Quality @Anycubic Kobra X 0.4 nozzle.json").write_text(
+            json.dumps({"name": "0.16mm High Quality @Anycubic Kobra X", "sparse_infill_speed": "100"}))
+        r, config = self.converter_com("0.16mm High Quality @BBL A1")
+        self.assertEqual(config["print_settings_id"], "0.16mm High Quality @Anycubic Kobra X")
+        self.assertEqual(r.processo, "0.16mm High Quality @Anycubic Kobra X")
 
 
 class TestTrocaDeTipo(Base):

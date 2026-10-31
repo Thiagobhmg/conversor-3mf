@@ -40,8 +40,11 @@ def verificar(arquivo: str | Path, tempo_limite: int = 300) -> dict:
         }
     with tempfile.TemporaryDirectory() as pasta:
         saida = Path(pasta) / "regravado.3mf"
+        # OrcaSlicer: pasta de dados vazia (a do usuário tem presets e instâncias abertas), e a linha
+        # de comando recusa a versão que o próprio Orca grava ("BambuStudio-02.06…" > 2.4.2)
+        orca = ["--datadir", str(Path(pasta) / "dados"), "--allow-newer-file"] if config.eh_orca(executavel) else []
         processo = subprocess.run(
-            [str(executavel), "--export-3mf", str(saida), str(arquivo)],
+            [str(executavel), *orca, "--export-3mf", str(saida), str(arquivo)],
             capture_output=True, text=True, timeout=tempo_limite, cwd=pasta,
             env=config.ambiente_slicer(executavel),
         )

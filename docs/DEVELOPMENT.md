@@ -25,11 +25,11 @@ conversor-3mf/                        raiz fixa: checkout principal, sempre na m
 
 - `git` e `gh` autenticado com acesso ao fork.
 - `uv` (recomendado) ou Python 3.10+ com `venv`. O pacote depende de `mcp`, `numpy` e `pillow`.
-- Opcional: **Anycubic Slicer Next**, para ler os perfis de sistema da Kobra X e conferir o arquivo convertido
-  pela linha de comando. No Windows e no macOS o conversor acha a instalação sozinho; no Linux (pacote AUR
-  `anycubicslicernext-bin`, em `/opt/AnycubicSlicerNext`) depende da Issue
-  [#2](https://github.com/Thiagobhmg/conversor-3mf/issues/2).
-- Opcional: uma instância **isolada** do OrcaSlicer com servidor MCP, para abrir e fatiar o resultado.
+- **OrcaSlicer** (alvo do fork): a build do MCP em `~/Apps/orcaslicer-mcp/current`, para os perfis da Kobra X, o
+  molde e a conferência pela linha de comando; e uma instância **isolada** dela com servidor MCP, para abrir e fatiar o
+  resultado.
+- Opcional: **Anycubic Slicer Next** (alvo do upstream). No Linux, o pacote AUR `anycubicslicernext-bin` em
+  `/opt/AnycubicSlicerNext` é achado sozinho.
 
 ## Iniciar uma tarefa em worktree
 
@@ -64,8 +64,15 @@ uv pip install --python .venv/bin/python -e .
 Sem `uv`: `python3 -m venv .venv`, `export PIP_CACHE_DIR="$PWD/.local/cache/pip"` e
 `.venv/bin/pip install -e .`.
 
-Outras variáveis do conversor: `CONVERSOR3MF_SLICER` (pasta ou executável do Anycubic Slicer Next; `nenhum` finge que
-não está instalado, como nos testes) e `CONVERSOR3MF_IDIOMA` (`pt`, `en` ou `es`).
+Outras variáveis do conversor: `CONVERSOR3MF_SLICER` (pasta ou executável do slicer; `nenhum` finge que não há slicer,
+como nos testes) e `CONVERSOR3MF_IDIOMA` (`pt`, `en` ou `es`). No fork, aponte para o OrcaSlicer do MCP:
+
+```bash
+export CONVERSOR3MF_SLICER="$HOME/Apps/orcaslicer-mcp/current"
+```
+
+Com o OrcaSlicer, a conferência pela linha de comando usa `--datadir` temporário (nunca a pasta de uma instância) e
+`--allow-newer-file` (a linha de comando 2.4.2 recusa a versão `BambuStudio-02.06…` que o próprio Orca grava).
 
 ## Validar
 
@@ -84,11 +91,36 @@ Leia o arquivo de onde ele estiver, mas grave a saída no worktree; o original n
 
 ```bash
 .venv/bin/conversor3mf inspecionar caminho/modelo.3mf
-.venv/bin/conversor3mf ace definir caminho/molde-salvo-no-anycubic.3mf   # uma vez por pasta de dados
+.venv/bin/conversor3mf ace definir .local/tmp/molde/molde-orca.3mf   # uma vez por pasta de dados (abaixo)
 .venv/bin/conversor3mf planejar caminho/modelo.3mf
 mkdir -p .local/artifacts
-.venv/bin/conversor3mf converter caminho/modelo.3mf --saida .local/artifacts/modelo_KobraX.3mf
+.venv/bin/conversor3mf converter caminho/modelo.3mf --saida "$PWD/.local/artifacts/modelo_KobraX.3mf"
 ```
+
+Use caminho absoluto na saída: com caminho relativo a conferência falha (Issue #6).
+
+### Molde pelo OrcaSlicer
+
+Até a automação (Issue #10), o molde é gerado pela linha de comando do OrcaSlicer, numa pasta de dados vazia:
+
+1. Leia os slots do ACE (só leitura): `curl -s http://127.0.0.1:7125/kx/filament/slots`.
+2. Monte, em `.local/tmp/molde/`, JSON **achatados** (herança resolvida, `inherits` vazio) a partir de
+   `resources/profiles/Anycubic` da build: a máquina `Anycubic Kobra X 0.4 nozzle` com
+   `retraction_distances_when_cut = ["18"]` (a linha de comando recusa o 0 do perfil de sistema; a função está
+   desligada), um processo da Kobra X e um `Generic PETG @Anycubic Kobra X 0.4 nozzle` por slot, com o padrão local de
+   PETG (bico 236 °C também na 1ª camada, mesa 80 °C PEI / 75 °C Cool Plate) e `filament_colour` = cor do slot.
+3. Rode, de dentro de `.local/tmp/molde/` (a linha de comando grava um `result.json` na pasta atual), com um STL
+   qualquer (ex.: um cubo):
+
+   ```bash
+   ~/Apps/orcaslicer-mcp/current/AppRun --datadir "$PWD/dados" \
+     --load-settings "maquina.json;processo.json" \
+     --load-filaments "petg-slot1.json;petg-slot2.json;petg-slot3.json;petg-slot4.json" \
+     --export-3mf molde-orca.3mf cubo.stl
+   ```
+
+O resultado esperado: impressora `Anycubic Kobra X 0.4 nozzle`, 4 × `Generic PETG`, `different_settings_to_system`
+vazio e nenhum perfil embutido. Detalhes em `thoughts/research/11-orcaslicer.md`.
 
 ## Recursos compartilhados
 
