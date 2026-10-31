@@ -8,3 +8,11 @@ dist/
 /previa_*.png
 *.3mf
 !tests/**/*.3mf
+
+# fork: organização local (AGENTS.md §3) e segredos
+.claude/worktrees/
+.claude/settings.local.json
+.local/
+.env
+.env.*
+!.env.example

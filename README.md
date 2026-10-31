@@ -42,6 +42,9 @@ it for you.
 
 - Windows with **Anycubic Slicer Next** installed. It is detected automatically; if not,
   set `CONVERSOR3MF_SLICER` to its folder.
+- On Linux, the Anycubic Slicer Next package from the AUR (`anycubicslicernext-bin`), in
+  `/opt/AnycubicSlicerNext`, is detected too; for another location, set `CONVERSOR3MF_SLICER`.
+  Tested on Manjaro with Anycubic Slicer Next 2.0.0.5.
 - **Python 3.10+**.
 - An Anycubic **Kobra X** with ACE. Other Anycubic printers may work but are untested;
   see [Limitations](#limitations).
@@ -263,6 +266,9 @@ python -m venv .venv
 The tests use synthetic 3MF files built in `tests/fixtures.py` and do not need the slicer.
 `ferramentas/testar_na_interface.ps1` opens a file in the slicer GUI, takes a screenshot
 and closes it.
+
+**Neste fork (Thiagobhmg/conversor-3mf):** regras de trabalho em [AGENTS.md](AGENTS.md);
+preparação do ambiente no Linux, testes e fluxo de PR em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## License
 

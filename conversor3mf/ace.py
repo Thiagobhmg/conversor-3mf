@@ -190,9 +190,18 @@ def alterar_slot(numero: int, cor: str | None = None, tipo: str | None = None, n
 
 def aplicar_slots(config: dict, ace: Ace) -> None:
     """Ajusta as listas por filamento do config para refletir os slots (cor e tipo)."""
-    chaves = _chaves_de_filamento()
     n = len(ace.slots)
     tipos_molde = list(config.get("filament_type") or [])
+    trocas = [(tipos_molde[i], s) for i, s in enumerate(ace.slots) if i < len(tipos_molde) and tipos_molde[i] != s.tipo]
+    if trocas and pasta_perfis() is None:
+        # sem os perfis só dá para copiar cor e nome do perfil: tipo e temperaturas ficariam do material antigo
+        antigo, slot = trocas[0]
+        raise ValueError(
+            f"o slot {slot.slot} passou de {antigo} para {slot.tipo}, mas não achei os perfis do Anycubic "
+            "Slicer Next para trazer as temperaturas e os demais ajustes desse filamento. Instale o slicer "
+            "(ou defina CONVERSOR3MF_SLICER) ou salve um molde novo com esse filamento no slot."
+        )
+    chaves = _chaves_de_filamento()
     original = {k: list(v) for k, v in config.items() if k in chaves and isinstance(v, list) and len(v) == n}
     for i, slot in enumerate(ace.slots):
         if i < len(tipos_molde) and tipos_molde[i] != slot.tipo:
