@@ -190,6 +190,46 @@ class TestTrocaDeTipo(Base):
         self.assertEqual(config["filament_settings_id"][0], "Anycubic PETG @Anycubic Kobra X 0.4 nozzle")
 
 
+class TestEscolhasDoDesigner(Base):
+    """Só vai para a Kobra X o que o designer mudou no perfil dele (different_settings_to_system)."""
+
+    def setUp(self):
+        super().setUp()
+        molde = Path(os.environ["CONVERSOR3MF_DADOS"]) / ace.ARQUIVO_MOLDE
+        config = json.loads(molde.read_text(encoding="utf8"))
+        config.update(elefant_foot_compensation="0.15", tree_support_wall_count="0")
+        molde.write_text(json.dumps(config), encoding="utf8")
+
+    def converter_com(self, **mudancas):
+        caminho = self.pasta / "designer.3mf"
+        with zipfile.ZipFile(self.origem) as z:
+            itens = {n: z.read(n) for n in z.namelist()}
+        config = json.loads(itens["Metadata/project_settings.config"])
+        # padrões da impressora de origem que o designer não tocou; o -1 nem é válido no OrcaSlicer
+        config.update(elefant_foot_compensation="0.075", tree_support_wall_count="-1", **mudancas)
+        itens["Metadata/project_settings.config"] = json.dumps(config).encode()
+        with zipfile.ZipFile(caminho, "w") as z:
+            for nome, dados in itens.items():
+                z.writestr(nome, dados)
+        r = converter(caminho)
+        return r, json.loads(self.ler(r.destino, "Metadata/project_settings.config"))
+
+    def test_padroes_da_origem_ficam_com_a_kobra_x(self):
+        r, config = self.converter_com(
+            different_settings_to_system=["wall_loops;prime_tower_rib_wall", "", "", "", ""])
+        self.assertEqual(config["wall_loops"], "3")  # o designer mudou
+        self.assertEqual(config["layer_height"], "0.16")  # a altura é a escolha do perfil
+        self.assertEqual(config["elefant_foot_compensation"], "0.15")
+        self.assertEqual(config["tree_support_wall_count"], "0")
+        self.assertEqual(set(r.configuracoes_do_modelo), {"layer_height", "wall_loops"})
+        self.assertTrue(any("prime_tower_rib_wall" in a for a in r.avisos))
+
+    def test_sem_a_lista_do_designer_leva_as_diferencas(self):
+        # projetos que não dizem o que o designer mudou seguem como antes
+        _, config = self.converter_com()
+        self.assertEqual(config["elefant_foot_compensation"], "0.075")
+
+
 class TestIlhas(Base):
     def test_mapa_e_repintura(self):
         destino = Path(converter(self.origem).destino)
