@@ -22,9 +22,14 @@ curtas, testes com 3MF sintéticos em `tests/fixtures.py`).
 
 ### Fatos que mais causam erro
 
-- O conversor depende de um **molde**: um projeto salvo pelo Anycubic Slicer Next com a Kobra X (perfil de
-  sistema, sem alterações) e **um filamento por slot do ACE**. O número de filamentos do molde é o número de slots
-  que o conversor enxerga.
+- **O alvo do fork é o OrcaSlicer do MCP** (decisão do usuário, 2026-10-30, Issue #11): perfis, molde e conferência
+  vêm da instalação apontada por `CONVERSOR3MF_SLICER` (a build do MCP). O suporte ao Anycubic Slicer Next continua
+  por causa do upstream.
+- O conversor depende de um **molde**: um projeto gravado pelo slicer-alvo com a Kobra X (perfil de sistema) e **um
+  filamento por slot do ACE**. O número de filamentos do molde é o número de slots que o conversor enxerga. No fork, o
+  molde usa o `Generic PETG` com o padrão local de PETG (como gerar: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#molde-pelo-orcaslicer)).
+- No OrcaSlicer, o nome do preset de processo não leva o bico (`0.16mm High Quality @Anycubic Kobra X`), mas o arquivo
+  leva (`… 0.4 nozzle.json`). O conversor grava o nome do preset.
 - Os dados do usuário (molde, slots, calibração de purga) ficam na pasta de `CONVERSOR3MF_DADOS`. Sem ela, vão para
   `~/.config/conversor3mf`. Em desenvolvimento, aponte sempre para dentro do worktree.
 - **Este repositório não imprime nada.** Mandar para a impressora é outro fluxo, que exige o "pode imprimir" do
