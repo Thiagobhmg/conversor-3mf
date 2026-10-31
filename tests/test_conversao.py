@@ -137,6 +137,49 @@ class TestTrocaDeTipo(Base):
         self.assertEqual(config["filament_settings_id"][0], "Anycubic PETG @Anycubic Kobra X 0.4 nozzle")
 
 
+class TestEstiloDoProcesso(Base):
+    """O processo da Kobra X segue o estilo do original (High Quality ou Standard)."""
+
+    def setUp(self):
+        super().setUp()
+        slicer = self.pasta / "slicer"
+        processos = slicer / "resources" / "profiles" / "Anycubic" / "process"
+        processos.mkdir(parents=True)
+        (slicer / "AnycubicSlicerNext.exe").write_text("")
+        for nome, velocidade in (("0.16mm Standard", "250"), ("0.16mm High Quality", "100"), ("0.08mm Standard", "250")):
+            (processos / f"{nome} @Anycubic Kobra X 0.4 nozzle.json").write_text(
+                json.dumps({"name": nome, "sparse_infill_speed": velocidade}))
+        os.environ["CONVERSOR3MF_SLICER"] = str(slicer)
+
+    def converter_com(self, processo, altura="0.16"):
+        caminho = self.pasta / f"{processo.split(' @')[0].replace(' ', '_')}.3mf"
+        with zipfile.ZipFile(self.origem) as z:
+            itens = {n: z.read(n) for n in z.namelist()}
+        config = json.loads(itens["Metadata/project_settings.config"])
+        config.update(print_settings_id=processo, layer_height=altura)
+        itens["Metadata/project_settings.config"] = json.dumps(config).encode()
+        with zipfile.ZipFile(caminho, "w") as z:
+            for nome, dados in itens.items():
+                z.writestr(nome, dados)
+        r = converter(caminho)
+        return r, json.loads(self.ler(r.destino, "Metadata/project_settings.config"))
+
+    def test_high_quality_continua_high_quality(self):
+        r, config = self.converter_com("0.16mm High Quality @BBL A1")
+        self.assertEqual(config["print_settings_id"], "0.16mm High Quality @Anycubic Kobra X 0.4 nozzle")
+        self.assertEqual(config["sparse_infill_speed"], "100")
+        self.assertFalse(any("processo original" in a for a in r.avisos))
+
+    def test_optimal_da_bambu_e_standard(self):
+        _, config = self.converter_com("0.16mm Optimal @BBL A1")
+        self.assertEqual(config["print_settings_id"], "0.16mm Standard @Anycubic Kobra X 0.4 nozzle")
+
+    def test_sem_high_quality_na_altura_avisa(self):
+        r, config = self.converter_com("0.08mm High Quality @BBL A1", altura="0.08")
+        self.assertEqual(config["print_settings_id"], "0.08mm Standard @Anycubic Kobra X 0.4 nozzle")
+        self.assertTrue(any("0.08mm High Quality @BBL A1" in a and "High Quality" in a for a in r.avisos))
+
+
 class TestIlhas(Base):
     def test_mapa_e_repintura(self):
         destino = Path(converter(self.origem).destino)

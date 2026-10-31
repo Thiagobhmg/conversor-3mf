@@ -251,28 +251,42 @@ def _colunas(quantidade: int) -> int:
     return arredondado + 1 if raiz > arredondado else max(arredondado, 1)
 
 
-def _escolher_processo(config: dict, fonte: dict) -> tuple[dict | None, str]:
+def _estilo_original(fonte: dict) -> str:
+    """Na Bambu só "High Quality" muda velocidades e acelerações; "Fine", "Optimal", "Draft"
+    e afins são só o nome da altura de camada, com as velocidades do Standard."""
+    return "High Quality" if "high quality" in str(fonte.get("print_settings_id", "")).lower() else "Standard"
+
+
+def _escolher_processo(config: dict, fonte: dict) -> tuple[dict | None, str, str | None]:
+    """Perfil de fábrica da Kobra X na altura do original, no mesmo estilo quando existir."""
     impressora = config.get("printer_settings_id", "")
     try:
         altura = float(fonte.get("layer_height", config.get("layer_height", 0.2)))
     except ValueError:
         altura = 0.2
-    for estilo in ("Standard", "High Quality", "Draft", "Extra Draft"):
+    preferido = _estilo_original(fonte)
+    estilos = [preferido] + [e for e in ("Standard", "High Quality", "Draft", "Extra Draft") if e != preferido]
+    for estilo in estilos:
         nome = f"{altura:.2f}mm {estilo} @{impressora}"
         perfil = modulo_ace.perfil_de_processo(nome)
         if perfil:
-            return perfil, nome
-    return None, config.get("print_settings_id", "")
+            aviso = None if estilo == preferido else (
+                f"O processo original é {fonte.get('print_settings_id')}, mas a {impressora} não tem perfil "
+                f"{preferido} em {altura:.2f} mm; usei {nome}.")
+            return perfil, nome, aviso
+    return None, config.get("print_settings_id", ""), None
 
 
-def _montar_config(projeto: Projeto, ace: modulo_ace.Ace, mapa: dict[int, int]) -> tuple[dict, str, dict]:
+def _montar_config(
+    projeto: Projeto, ace: modulo_ace.Ace, mapa: dict[int, int]
+) -> tuple[dict, str, dict, str | None]:
     config = copy.deepcopy(ace.molde)
     config.pop("_aplicativo", None)
     modulo_ace.aplicar_slots(config, ace)
     purga.aplicar_no_config(config)  # tabela de purga para as cores reais dos slots
     fonte = projeto.config
 
-    perfil, nome = _escolher_processo(config, fonte)
+    perfil, nome, aviso_processo = _escolher_processo(config, fonte)
     if perfil:
         for chave, valor in perfil.items():
             if chave not in modulo_ace.CHAVES_META and chave in config:
@@ -294,7 +308,7 @@ def _montar_config(projeto: Projeto, ace: modulo_ace.Ace, mapa: dict[int, int]) 
     diferencas = config.get("different_settings_to_system")
     if isinstance(diferencas, list) and diferencas:
         diferencas[0] = ";".join(sorted(alteradas))
-    return config, nome, alteradas
+    return config, nome, alteradas, aviso_processo
 
 
 def _remapear_model_settings(texto: str, mapa: dict[int, int], n_slots: int) -> str:
@@ -400,9 +414,9 @@ def converter(
     if destino.exists():
         raise ValueError(f"{destino} já existe; escolha outro nome")
 
-    config, processo, alteradas = _montar_config(projeto, ace, mapa)
+    config, processo, alteradas, aviso_processo = _montar_config(projeto, ace, mapa)
     aplicativo = ace.molde.get("_aplicativo", f"BambuStudio-{config.get('version', '2.0.0.3')}")
-    avisos = list(plano.avisos)
+    avisos = list(plano.avisos) + ([aviso_processo] if aviso_processo else [])
     if projeto.fatiado:
         avisos.append("O arquivo original estava fatiado; o G-code dele foi descartado. Fatie de novo no slicer.")
     ax0, ay0, ax1, ay1 = _area(projeto.config)
