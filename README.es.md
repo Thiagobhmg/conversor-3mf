@@ -44,6 +44,9 @@ que lo haga por ti.
 
 - Windows con **Anycubic Slicer Next** instalado. Se detecta solo; si no, define
   `CONVERSOR3MF_SLICER` con su carpeta.
+- En Linux, el paquete de Anycubic Slicer Next del AUR (`anycubicslicernext-bin`), en
+  `/opt/AnycubicSlicerNext`, también se detecta; en otra ubicación, define `CONVERSOR3MF_SLICER`.
+  Probado en Manjaro con Anycubic Slicer Next 2.0.0.5.
 - **Python 3.10 o superior**.
 - Una **Kobra X** con ACE. Otras impresoras Anycubic pueden funcionar, pero no están
   probadas (ver [Limitaciones](#limitaciones)).

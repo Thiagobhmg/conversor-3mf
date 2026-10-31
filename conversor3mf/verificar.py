@@ -43,6 +43,7 @@ def verificar(arquivo: str | Path, tempo_limite: int = 300) -> dict:
         processo = subprocess.run(
             [str(executavel), "--export-3mf", str(saida), str(arquivo)],
             capture_output=True, text=True, timeout=tempo_limite, cwd=pasta,
+            env=config.ambiente_slicer(executavel),
         )
         if processo.returncode != 0 or not saida.exists():
             erros = [l for l in (processo.stdout + processo.stderr).splitlines() if "[error]" in l]
